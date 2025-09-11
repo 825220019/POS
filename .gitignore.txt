@@ -1,0 +1,22 @@
+# Node / Composer
+node_modules/
+vendor/
+
+# Environment / credentials
+.env
+config.php
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Log and cache
+*.log
+cache/
+tmp/
+
+# Don't accidentally add local XAMPP DB files
+/mysql/data/
