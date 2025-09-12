@@ -1,34 +1,79 @@
 <?php
 
-function insert($data) {
+function insert($data)
+{
     global $koneksi;
 
-   $username = strtolower(mysqli_real_escape_string($koneksi, $data['username']));
-   $fullname = mysqli_real_escape_string($koneksi, $data['fullname']);
-   $password = mysqli_real_escape_string($koneksi, $data['password']);
-   $password2 = mysqli_real_escape_string($koneksi, $data['password2']);
+    $username = strtolower(mysqli_real_escape_string($koneksi, $data['username']));
+    $fullname = mysqli_real_escape_string($koneksi, $data['fullname']);
+    $password = mysqli_real_escape_string($koneksi, $data['password']);
+    $password2 = mysqli_real_escape_string($koneksi, $data['password2']);
 
-   if ($password !== $password2){
-    echo "script>
+    if ($password !== $password2) {
+        echo "<script>
     alert('Konfirmasi password tidak sesuai!');
     </script>";
-    return false;
-}
+        return false;
+    }
 
-$pass = password_hash($password, PASSWORD_DEFAULT);
+    $pass = password_hash($password, PASSWORD_DEFAULT);
 
-$cekUsername = mysqli_query($koneksi, "SELECT username FROM tbl_user WHERE username = '$username'");
-if (mysqli_num_rows($cekUsername) > 0) {
-    echo "<script>
+    $cekUsername = mysqli_query($koneksi, "SELECT username FROM tbl_user WHERE username = '$username'");
+    if (mysqli_num_rows($cekUsername) > 0) {
+        echo "<script>
     alert('Username sudah terdaftar!');
     </script>";
-    return false;
+        return false;
+    }
+
+    $sqlUser = "INSERT INTO tbl_user VALUES (null, '$username', '$fullname', '$pass')";
+    mysqli_query($koneksi, $sqlUser);
+
+    return mysqli_affected_rows($koneksi);
 }
 
-$sqlUser = "INSERT INTO tbl_user VALUES (null, '$username', '$fullname', '$pass')";
-mysqli_query($koneksi, $sqlUser);
 
-return mysqli_affected_rows($koneksi);
+function delete($id)
+{
+    global $koneksi;
+
+    $sqlDel = "DELETE FROM tbl_user WHERE userid = $id";
+    mysqli_query($koneksi, $sqlDel);
+
+    return mysqli_affected_rows($koneksi);
+}
+
+function update($data)
+{
+    global $koneksi;
+
+    $iduser = mysqli_real_escape_string($koneksi, $data['id']);
+    $username = strtolower(mysqli_real_escape_string($koneksi, $data['username']));
+    $fullname = mysqli_real_escape_string($koneksi, $data['fullname']);
+    
+    //cek username sekarang
+    $queryUsername = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE userid = $iduser");
+    $dataUsername = mysqli_fetch_assoc($queryUsername);
+    $curUsername = $dataUsername['username'];
+
+    //cek username baru
+    $newUsername = mysqli_query($koneksi, "SELECT username FROM tbl_user WHERE username = '$username'");
+
+    if($username == $curUsername) {
+        if (mysqli_num_rows($newUsername) > 1) {
+            echo "<script>
+            alert('Username sudah terdaftar!');
+            </script>";
+            return false;
+        }
+    }
+
+    mysqli_query($koneksi, "UPDATE tbl_user SET 
+        username = '$username',
+        fullname = '$fullname'
+        WHERE userid = $iduser");
+
+    return mysqli_affected_rows($koneksi);
 }
 
 ?>

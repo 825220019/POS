@@ -1,4 +1,14 @@
 <?php
+
+session_start();
+
+if (isset($_SESSION["ssLoginPOS"])){}
+else{
+    header("location: auth/login.php");
+    exit();
+}
+
+
 require "config/config.php";
 
 $title = "Dashboard - CAngelline POS";
