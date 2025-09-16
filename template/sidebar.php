@@ -8,18 +8,22 @@
   </a>
 
   <!-- Sidebar Menu -->
+  <div class="user-panel mt-3 pb-3 mb-3 d-flex">
   <nav class="mt-2">
     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
       <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
       <li class="nav-item">
-        <a href="<?= $main_url ?>dashboard.php" class="nav-link">
+        <a href="<?= $main_url ?>dashboard.php" class="nav-link <?= menuHome() ?>">
           <i class="nav-icon fas fa-tachometer-alt text-sm"></i>
           <p>
             Dashboard
           </p>
         </a>
       </li>
+      <?php 
+      if (userLogin()['level'] != 2){
+      ?>
       <li class="nav-item">
         <a href="#" class="nav-link">
           <i class="nav-icon fas fa-folder text-sm"></i>
@@ -49,6 +53,7 @@
           </li>
         </ul>
       </li>
+      <?php } ?>
       <li class="nav-header">Transaksi</li>
       <li class="nav-item">
         <a href="#" class="nav-link">
@@ -87,7 +92,10 @@
           </p>
         </a>
       </li>
-      <li class="nav-item">
+      <?php 
+      if(userLogin()['level']  == 1){
+      ?>
+      <li class="nav-item <?= menuSetting() ?>">
         <a href="#" class="nav-link">
           <i class="nav-icon fas fa-folder text-sm"></i>
           <p>
@@ -97,13 +105,14 @@
         </a>
         <ul class="nav nav-treeview">
           <li class="nav-item">
-            <a href="<?= $main_url?>user/data-user.php" class="nav-link">
+            <a href="<?= $main_url?>user/data-user.php" class="nav-link <?= menuUser()?>">
               <i class="far fa-circle nav-icon text-sm"></i>
               <p>Users</p>
             </a>
           </li>
         </ul>
       </li>
+      <?php } ?>
     </ul>
   </nav>
 </aside>

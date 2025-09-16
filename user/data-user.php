@@ -55,6 +55,7 @@ require "../template/sidebar.php";
                             <th>No</th>
                             <th>Username</th>
                             <th>Nama Lengkap</th>
+                            <th>Level User</th>
                             <th width="10%">Operasi</th>
                         </tr>
                     </thead>
@@ -67,6 +68,7 @@ require "../template/sidebar.php";
                             <td><?= $no++; ?></td>
                             <td><?= $user['username']; ?></td>
                             <td><?= $user['fullname']; ?></td>
+                            <td><?= $user['level']; ?></td>
                             <td>
                                 <a href="edit-user.php?id=<?= $user['userid']; ?>"
                                     class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>

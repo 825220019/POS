@@ -1,5 +1,9 @@
 <?php
 
+if (userLogin()['level'] != 1) {
+    header("location" . $main_url ."error-page.php");
+    exit();
+}
 function insert($data)
 {
     global $koneksi;
@@ -8,6 +12,7 @@ function insert($data)
     $fullname = mysqli_real_escape_string($koneksi, $data['fullname']);
     $password = mysqli_real_escape_string($koneksi, $data['password']);
     $password2 = mysqli_real_escape_string($koneksi, $data['password2']);
+    $level = mysqli_real_escape_string($koneksi, $data['level']);   
 
     if ($password !== $password2) {
         echo "<script>
@@ -26,7 +31,7 @@ function insert($data)
         return false;
     }
 
-    $sqlUser = "INSERT INTO tbl_user VALUES (null, '$username', '$fullname', '$pass')";
+    $sqlUser = "INSERT INTO tbl_user VALUES (null, '$username', '$fullname', '$pass', '$level')";
     mysqli_query($koneksi, $sqlUser);
 
     return mysqli_affected_rows($koneksi);
@@ -50,6 +55,7 @@ function update($data)
     $iduser = mysqli_real_escape_string($koneksi, $data['id']);
     $username = strtolower(mysqli_real_escape_string($koneksi, $data['username']));
     $fullname = mysqli_real_escape_string($koneksi, $data['fullname']);
+    $level = mysqli_real_escape_string($koneksi, $data['level']);
     
     //cek username sekarang
     $queryUsername = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE userid = $iduser");
@@ -70,10 +76,27 @@ function update($data)
 
     mysqli_query($koneksi, "UPDATE tbl_user SET 
         username = '$username',
-        fullname = '$fullname'
+        fullname = '$fullname',
+        level = '$level'
         WHERE userid = $iduser");
 
     return mysqli_affected_rows($koneksi);
+}
+
+function selectUser1($level){
+    $result = null;
+    if ($level == 1) {
+        $result = "selected";
+}
+return $result;
+}
+
+function selectUser2($level){
+    $result = null;
+    if ($level == 2) {
+        $result = "selected";
+}
+return $result;
 }
 
 ?>

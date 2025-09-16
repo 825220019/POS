@@ -82,6 +82,14 @@ if (isset($_POST['simpan'])) {
                                 <input type="password" class="form-control" id="password2" name="password2"
                                     placeholder="masukkan kembali password" required>
                             </div>
+                            <div class="form-group">
+                                <label for="level">Level</label>
+                                <select name="level" id="level" class="form-control">
+                                    <option value="">-- Level User--</option>
+                                    <option value="1">Admin</option>
+                                    <option value="2">Kasir</option>
+                                </select>
+                            </div>
 
                         </div>
                     </div>

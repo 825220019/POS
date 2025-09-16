@@ -14,7 +14,7 @@
       <!-- Messages Dropdown Menu -->
       <li class="nav-item dropdown">
             <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                <?= 'Admin' ?> <i class="fas fa-user-cog ml-2"></i>
+                <?= userLogin()['username'] ?> <i class="fas fa-user-cog ml-2"></i>
             </a>
           <div class="dropdown-menu dropdown-menu dropdown-menu-right">
             <a href="#" class="dropdown-item text-right">Change Password <i class="fas fa-key"></i></a>

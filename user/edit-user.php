@@ -20,6 +20,7 @@ require "../template/sidebar.php";
 $id = $_GET['id'];
 $sqlEdit = "SELECT * FROM tbl_user WHERE userid = $id";
 $user = getData($sqlEdit)[0];
+$level = $user["level"];
 
 if (isset($_POST['koreksi'])) {
     if (update($_POST)) {
@@ -78,6 +79,14 @@ if (isset($_POST['koreksi'])) {
                                 <label for="fullname">Fullname</label>
                                 <input type="text" class="form-control" id="fullname" name="fullname"
                                     placeholder="masukkan nama lengkap" value="<?= $user['fullname']; ?>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="level">Level</label>
+                                <select name="level" id="level" class="form-control">
+                                    <option value="">-- Level User--</option>
+                                    <option value="1" <?=selectUser1($level)?>>Admin</option>
+                                    <option value="1" <?=selectUser2($level)?>>Kasir</option>
+                                </select>
                             </div>
                         </div>
                     </div>

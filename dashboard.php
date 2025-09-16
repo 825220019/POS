@@ -10,6 +10,7 @@ else{
 
 
 require "config/config.php";
+require "config/functions.php";
 
 $title = "Dashboard - CAngelline POS";
 require "template/header.php";
