@@ -46,7 +46,7 @@ require "template/sidebar.php";
 
           <p>
             We could not find the page you were looking for.
-            Meanwhile, you may <a href="dashboard.php">return to dashboard</a> or try using the search form.
+            Meanwhile, you may <a href="dashboard.php">return to dashboard</a>
           </p>
         </div>
         <!-- /.error-content -->
@@ -56,3 +56,6 @@ require "template/sidebar.php";
     <!-- /.content -->
   </div>
   <!-- /.content-wrapper -->
+<?php
+require "template/footer.php";
+?>

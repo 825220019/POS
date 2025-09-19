@@ -2,8 +2,8 @@
 
 session_start();
 
-if (!isset($_SESSION["ssLoginPOS"])){
-    header("location: ../auth/login.php");
+if (isset($_SESSION["ssLoginPOS"])) {
+    header("Location: ../dashboard.php");
     exit();
 }
 

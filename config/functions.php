@@ -44,6 +44,17 @@ function menuSetting(){
 }
 }
 
+function menuMaster(){
+    {
+       if (userMenu() == 'supplier'){
+        $result = 'menu-is-opening menu-open';
+    } else {
+        $result = null;
+    }
+    return $result;
+}
+}
+
 function menuUser(){
     if (userMenu() == 'user'){
         return 'active';
@@ -51,4 +62,13 @@ function menuUser(){
         return null;
     }
 }
+function menuSupplier(){
+    if (userMenu() == 'supplier'){
+        return 'active';
+    }else{
+        return null;
+    }
+}
+
+
 ?>
