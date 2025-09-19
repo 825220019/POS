@@ -2,19 +2,19 @@
 
 session_start();
 
-if (!isset($_SESSION["ssLoginPOS"])){
+if (!isset($_SESSION["ssLoginPOS"])) {
     header("location: auth/login.php");
     exit();
 }
 
 
 require "../config/config.php";
-require "../config/functions.php"; 
+require "../config/functions.php";
 require "../module/mode-password.php";
 
 $title = "Change Password - CAngelline POS";
 require "../template/header.php";
-require "../template/navbar.php";   
+require "../template/navbar.php";
 require "../template/sidebar.php";
 
 //update password
@@ -29,7 +29,7 @@ if (isset($_POST['simpan'])) {
 
 if (isset($_GET['msg'])) {
     $msg = $_GET['msg'];
-}else {
+} else {
     $msg = '';
 }
 
@@ -40,64 +40,63 @@ $alert2 = '<small class="text-danger pl-2 font-italic">Current Password tidak sa
 
 
 <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
+<div class="content-wrapper">
     <!-- Content Header (Page header) -->
     <div class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1 class="m-0">Password</h1>
-          </div><!-- /.col -->
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="<?=
-              $main_url ?>dashboard.php">Home</a></li>
-              <li class="breadcrumb-item active">Password</li>
-            </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Password</h1>
+                </div><!-- /.col -->
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="<?=
+                            $main_url ?>dashboard.php">Home</a></li>
+                        <li class="breadcrumb-item active">Password</li>
+                    </ol>
+                </div><!-- /.col -->
+            </div><!-- /.row -->
+        </div><!-- /.container-fluid -->
     </div>
 
     <section class="content">
         <div class="container-fluid">
             <div class="card">
-            <form action="" method="post">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-key fa-sm"></i> Change Password</h3>
-                <button type="submit" name="simpan" class="btn btn-primary btn-sm float-right"><i class="fas fa-edit fa-sm"></i> Save</button>
-                <button type="reset" name= "reset" class="btn btn-danger btn-sm float-right mr-1"><i class="fas fa-times fa-sm"></i> Reset</button>
+                <form action="" method="post">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-key fa-sm"></i> Change Password</h3>
+                        <button type="submit" name="simpan" class="btn btn-primary btn-sm float-right"><i
+                                class="fas fa-edit fa-sm"></i> Save</button>
+                        <button type="reset" name="reset" class="btn btn-danger btn-sm float-right mr-1"><i
+                                class="fas fa-times fa-sm"></i> Reset</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="col-lg-8 mb-3">
+                            <div class="form-group">
+                                <label for="curPass">Current Password</label>
+                                <input type="password" class="form-control" id="curPass" name="curPass"
+                                    placeholder="masukkan password saat ini" required>
+                                <?php if ($msg == 'err2') {
+                                    echo $alert2;
+                                } ?>
+                            </div>
+                            <div class="form-group">
+                                <label for="newPass">New Password</label>
+                                <input type="password" class="form-control" id="newPass" name="newPass"
+                                    placeholder="masukkan password baru" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="conPass">Confirm Password</label>
+                                <input type="password" class="form-control" id="conPass" name="conPass"
+                                    placeholder="masukkan kembali password baru" required>
+                                <?php if ($msg == 'err1') {
+                                    echo $alert1;
+                                } ?>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
-            </form>
-            <div class="card-body">
-                <div class="col-lg-8 mb-3">
-                    <div class="form-group">
-                        <label for="curPass">Current Password</label>
-                        <input type="password" class="form-control" 
-                        id="curPass" name="curPass" 
-                        placeholder="masukkan password saat ini" required>
-                        <?php if($msg == 'err2'){
-                            echo $alert2;
-                        } ?>
-                    </div>
-                    <div class="form-group">
-                        <label for="newPass">New Password</label>
-                        <input type="password" class="form-control" 
-                        id="newPass" name="newPass" 
-                        placeholder="masukkan password baru" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="conPass">Confirm Password</label>
-                        <input type="password" class="form-control" 
-                        id="conPass" name="conPass" 
-                        placeholder="masukkan kembali password baru" required>
-                        <?php if($msg == 'err1'){
-                            echo $alert1;
-                        } ?>
-                    </div>
-                </div>
-            </div>
-        </div>
     </section>
 </div>
 <?php
