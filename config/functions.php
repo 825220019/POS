@@ -44,31 +44,39 @@ function menuSetting(){
 }
 }
 
-function menuMaster(){
-    {
-       if (userMenu() == 'supplier'){
+function menuMaster() {
+    if (userMenu() == 'supplier' || userMenu() == 'pelanggan') {
         $result = 'menu-is-opening menu-open';
     } else {
         $result = null;
     }
     return $result;
 }
-}
+
 
 function menuUser(){
     if (userMenu() == 'user'){
-        return 'active';
+        $result = 'active';
     }else{
-        return null;
+        $result = null;
     }
+    return $result;
 }
 function menuSupplier(){
     if (userMenu() == 'supplier'){
-        return 'active';
+        $result = 'active';
     }else{
-        return null;
+        $result = null;
     }
+    return $result;
 }
 
-
+function menuPelanggan(){
+    if (userMenu() == 'pelanggan'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
 ?>

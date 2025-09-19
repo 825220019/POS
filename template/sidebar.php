@@ -24,8 +24,8 @@
       <?php 
       if (userLogin()['level'] != 2){
       ?>
-      <li class="nav-item">
-        <a href="#" class="nav-link <?= menuMaster()?>">
+      <li class="nav-item <?= menuMaster()?>">
+        <a href="#" class="nav-link">
           <i class="nav-icon fas fa-folder text-sm"></i>
           <p>
             Master
@@ -34,15 +34,15 @@
         </a>
         <ul class="nav nav-treeview">
           <li class="nav-item">
-            <a href="<?= $main_url?>supplier/data-supplier.php" class="nav-link <?=menuSupplier()?>">
+            <a href="<?= $main_url?>supplier/data-supplier.php" class="nav-link <?= menuSupplier()?>">
               <i class="far fa-circle nav-icon text-sm"></i>
               <p>Supplier</p>
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="<?= $main_url?>pelanggan/data-pelanggan.php" class="nav-link <?= menuPelanggan()?>">
               <i class="far fa-circle nav-icon text-sm"></i>
-              <p>Customer</p>
+              <p>pelanggan</p>
             </a>
           </li>
           <li class="nav-item">
