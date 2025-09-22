@@ -45,7 +45,7 @@ function menuSetting(){
 }
 
 function menuMaster() {
-    if (userMenu() == 'supplier' || userMenu() == 'pelanggan') {
+    if (userMenu() == 'supplier' || userMenu() == 'pelanggan' || userMenu() == 'barang') {
         $result = 'menu-is-opening menu-open';
     } else {
         $result = null;
@@ -79,4 +79,14 @@ function menuPelanggan(){
     }
     return $result;
 }
+
+function menuBarang(){
+    if (userMenu() == 'barang'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
+
 ?>

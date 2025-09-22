@@ -21,12 +21,11 @@ $alert = '';
 
 if (isset($_POST['simpan'])) {
     if (insert($_POST)) {
-        $alert = '<div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="icon fas fa-check"></i> Supplier berhasil ditambahkan!
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        </div>';
+        $alert = '<div class="alert alert-success alert-dismissible">
+                  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                  <h5><i class="icon fas fa-check"></i> Alert!</h5>
+                  Supplier berhasil ditambahkan.
+                </div>';
 
     }
 }

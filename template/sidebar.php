@@ -46,7 +46,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="<?= $main_url?>barang/index.php" class="nav-link <?= menuBarang()?>">
               <i class="far fa-circle nav-icon text-sm"></i>
               <p>Barang</p>
             </a>
@@ -56,7 +56,7 @@
       <?php } ?>
       <li class="nav-header">Transaksi</li>
       <li class="nav-item">
-        <a href="#" class="nav-link">
+        <a href="<?= $main_url?>pembelian/index.php" class="nav-link">
           <i class="nav-icon fas fa-shopping-cart text-sm"></i>
           <p>
             Pembelian
