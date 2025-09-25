@@ -42,7 +42,7 @@
           <li class="nav-item">
             <a href="<?= $main_url?>pelanggan/data-pelanggan.php" class="nav-link <?= menuPelanggan()?>">
               <i class="far fa-circle nav-icon text-sm"></i>
-              <p>pelanggan</p>
+              <p>Pelanggan</p>
             </a>
           </li>
           <li class="nav-item">
