@@ -31,6 +31,7 @@ function insert ($data){
     $no = mysqli_real_escape_string($koneksi, $data['nobeli']);
     $tgl = mysqli_real_escape_string($koneksi, $data['tglNota']);
     $kode = mysqli_real_escape_string($koneksi, $data['kodeBrg']);
+    $nama = mysqli_real_escape_string($koneksi, $data['namaBrg']);
     $qty = mysqli_real_escape_string($koneksi, $data['qty']);
     $harga = mysqli_real_escape_string($koneksi, $data['harga']);
     $jmlharga = mysqli_real_escape_string($koneksi, $data['jmlHarga']);
@@ -43,7 +44,7 @@ function insert ($data){
         </script>";
         return false;
 }
-}
+
 
 if (empty($qty)){
     echo "<script>
@@ -60,6 +61,7 @@ mysqli_query($koneksi, "UPDATE tbl_barang SET stock = stock + $qty WHERE
 id_barang = '$kode'");
 
 return mysqli_affected_rows($koneksi);
+} 
 
 function delete($idbrg, $idbeli, $qty){
     global $koneksi;

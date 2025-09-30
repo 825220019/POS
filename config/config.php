@@ -4,7 +4,7 @@ date_default_timezone_set('Asia/Jakarta');
 $host = 'localhost';
 $user = 'root';
 $pass = '';
-$dbname = 'db_cangellinepos';
+$dbname = 'db_pos';
 
 $koneksi = mysqli_connect($host, $user, $pass, $dbname);
 
@@ -15,6 +15,6 @@ $koneksi = mysqli_connect($host, $user, $pass, $dbname);
 //     echo "koneksi ke database berhasil";
 // }
 
-$main_url = "http://localhost/cangelline-pos/";
+$main_url = "http://localhost/pos/";
 
 ?>
