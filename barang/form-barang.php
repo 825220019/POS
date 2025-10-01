@@ -59,7 +59,6 @@ if (!empty($satuanData)) {
   }
 }
 
-
 } else {
   $msg = "";
 }
