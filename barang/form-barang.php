@@ -25,6 +25,41 @@ if (isset($_GET['msg'])) {
   $id = $_GET['id'];
   $sqlEdit = "SELECT * FROM tbl_barang WHERE id_barang = '$id'";
   $barang = getData($sqlEdit)[0];
+  // ambil varian dari database
+  $sqlVarian = "SELECT * FROM tbl_varian WHERE id_barang = '$id'";
+  $varians = getData($sqlVarian);
+  // ambil data satuan dari database
+  $sqlSatuan = "SELECT * FROM tbl_satuan WHERE id_varian IN (SELECT id_varian FROM tbl_varian WHERE id_barang = '$id')";
+  $satuanData = getData($sqlSatuan);
+
+  // ubah ke array biasa agar gampang dipanggil
+  $varianValues = [];
+  if (!empty($varians)) {
+    foreach ($varians as $v) {
+      $varianValues[] = $v['nama_varian']; // pakai nama_varian
+    }
+  }
+
+  // kumpulkan hanya jumlah_isi
+  $jumlahValues = [];
+  if (!empty($satuanData)) {
+    foreach ($satuanData as $s) {
+      $jumlahValues[] = $s['jumlah_isi'];
+    }
+  }
+
+  $satuanValues = [];
+if (!empty($satuanData)) {
+  foreach ($satuanData as $s) {
+    $satuanValues[] = [
+      'jumlah_isi' => $s['jumlah_isi'],
+      'satuan'     => $s['satuan'],
+      'harga_jual' => $s['harga_jual']
+    ];
+  }
+}
+
+
 } else {
   $msg = "";
 }
@@ -35,31 +70,33 @@ $alert = '';
 if (isset($_POST['simpan'])) {
   if ($msg != '') {
     if (update($_POST)) {
-      echo " 
-      <script>document.location.href = 'index.php?msg=updated'</script> ";
+      echo "<script>document.location.href = 'index.php?msg=updated'</script>";
     } else {
       echo "<script>document.location.href = 'index.php';</script>";
     }
   } else {
-    if (insert($_POST)) {
-      $alert = '
-<div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
-  <strong>Berhasil!</strong> Barang berhasil ditambahkan.
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</div>';
-
-    }
+  $idBarang = insert($_POST);
+  if ($idBarang) {
+    $alert = '
+    <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+      <strong>Berhasil!</strong> Barang berhasil ditambahkan.
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>';
   }
 }
+
+}
+
 ?>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const jumlahInputs = document.querySelectorAll("input[name='jumlah[]']");
     const beliInput = document.querySelector("input[name='harga_beli']"); // harga beli utama
-    const jualInputs = document.querySelectorAll("input[name='harga_jual[]']");
+    const jualInputs = document.querySelectorAll("input[name='harga_jual[]']"); // kolom bawah (array)
+    const hargaJualUtama = document.querySelector("input[name='harga_jual']");   // kolom kiri atas (single)
 
     const formatter = new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -68,35 +105,37 @@ if (isset($_POST['simpan'])) {
     });
 
     function updatePlaceholders() {
-      const hargaBeliUtama = parseFloat(beliInput.value) || 0;
-      let hargaPrev = hargaBeliUtama;
+      // 🔥 Baris pertama → placeholder ikut harga jual utama
+      const hargaJualAtas = parseFloat(hargaJualUtama.value) || 0;
+      if (jualInputs[0]) {
+        jualInputs[0].placeholder = hargaJualAtas > 0 ? formatter.format(Math.round(hargaJualAtas)) : "Rp 0";
+      }
 
-      for (let i = 0; i < jumlahInputs.length; i++) {
+      // 🔥 Baris kedua & seterusnya → ikut logika pembagian dari harga beli
+      let hargaPrev = parseFloat(beliInput.value) || 0;
+      for (let i = 1; i < jumlahInputs.length; i++) {
         const qty = parseFloat(jumlahInputs[i].value) || 0;
-
-        if (i === 0) {
-          // baris pertama langsung = harga beli utama
-          jualInputs[i].placeholder = hargaPrev > 0 ? formatter.format(Math.round(hargaPrev)) : "Rp 0";
+        if (hargaPrev > 0 && qty > 0) {
+          const harga = Math.round(hargaPrev / qty);
+          jualInputs[i].placeholder = formatter.format(harga);
+          hargaPrev = harga;
         } else {
-          if (hargaPrev > 0 && qty > 0) {
-            const harga = Math.round(hargaPrev / qty);
-            jualInputs[i].placeholder = formatter.format(harga);
-            hargaPrev = harga; // update harga acuan
-          } else {
-            jualInputs[i].placeholder = "Rp 0";
-            hargaPrev = 0;
-          }
+          jualInputs[i].placeholder = "Rp 0";
+          hargaPrev = 0;
         }
       }
     }
 
-    // Jalankan saat halaman pertama kali load
+    // Jalankan saat load
     updatePlaceholders();
 
     // Event listener
     if (beliInput) beliInput.addEventListener('input', updatePlaceholders);
+    if (hargaJualUtama) hargaJualUtama.addEventListener('input', updatePlaceholders);
     jumlahInputs.forEach(inp => inp.addEventListener('input', updatePlaceholders));
   });
+
+
 </script>
 
 <!-- Content Wrapper. Contains page content -->
@@ -120,7 +159,9 @@ if (isset($_POST['simpan'])) {
   </div>
   <section class="content">
     <div class="container-fluid">
-      <?php if ($alert != '') { echo $alert; } ?>
+      <?php if ($alert != '') {
+        echo $alert;
+      } ?>
       <div class="card">
         <form action="" method="post" enctype="multipart/form-data">
           <div class="card-header">
@@ -159,47 +200,58 @@ if (isset($_POST['simpan'])) {
                 <div class="form-group row mb-2"> <label for="stock_minimal" class="col-sm-3 col-form-label">Stock
                     Minimal</label>
                   <div class="col-sm-9">
-                    <input type="number" class="form-control" id="stock_minimal" name="stock_minimal" placeholder="0"
-                      required>
+                    <input type="number" class="form-control" id="stock_minimal" name="stock_minimal"
+                      value="<?= $msg != '' ? $barang['stock_minimal'] : null ?>" placeholder="0" required>
                   </div>
                 </div>
-
                 <div class="form-group row mb-2"> <label for="harga_beli" class="col-sm-3 col-form-label">Harga
                     Beli</label>
                   <div class="col-sm-9">
-                    <input type="number" class="form-control" id="harga_beli" name="harga_beli" placeholder="Rp 0"
-                      required>
+                    <input type="text" class="form-control" id="harga_beli" name="harga_beli"
+                      value="<?= $msg != '' ? number_format($barang['harga_beli'], 0, ',', '.') : null ?>"
+                      placeholder="Rp 0" required>
+                  </div>
+                </div>
+                <div class="form-group row mb-2">
+                  <label for="harga_jual" class="col-sm-3 col-form-label">Harga Jual</label>
+                  <div class="col-sm-9">
+                    <input type="text" class="form-control" id="harga_jual" name="harga_jual"
+                      value="<?= $msg != '' ? number_format($barang['harga_jual'], 0, ',', '.') : null ?>"
+                      placeholder="Rp 0">
+                  </div>
+                </div>
+                <div class="form-group row mb-2">
+                  <label for="supplier" class="col-sm-3 col-form-label">Supplier</label>
+                  <div class="col-sm-9">
+                    <select name="supplier" id="supplier" class="form-control" required>
+                      <option value="">-- Pilih Supplier --</option>
+                      <?php
+                      $suppliers = getData("SELECT * FROM tbl_supplier");
+                      foreach ($suppliers as $supplier) { ?>
+                        <option value="<?= $supplier['id_supplier'] ?>" <?= ($msg != '' && $barang['id_supplier'] == $supplier['id_supplier']) ? 'selected' : '' ?>>
+                          <?= $supplier['id_supplier'] . " | " . $supplier['nama'] ?>
+                        </option>
+                      <?php } ?>
+                    </select>
                   </div>
                 </div>
 
-                <div class="form-group row mb-2"> <label for="supplier" class="col-sm-3 col-form-label">Supplier</label>
-                  <div class="col-sm-9"> <select name="supplier" id="supplier" class="form-control" required>
-                      <option value="">-- Pilih Supplier --</option>
-                      <?php $suppliers = getData("SELECT * FROM tbl_supplier");
-                      foreach ($suppliers as $supplier) { ?>
-                        <option value="<?= $supplier['id_supplier'] ?>"
-                          <?= @$_GET['pilihsupplier'] == $supplier['id_supplier'] ? 'selected' : null ?>>
-                          <?= $supplier['id_supplier'] . " | " . $supplier['nama'] ?>
-                        </option> <?php } ?>
-                    </select> </div>
-                </div>
               </div>
             </div>
 
             <!-- Kolom Kanan -->
             <div class="col-lg-6">
-              <div class="card card-outline card-warning p-3" style="max-height: 270px; overflow-y: auto;">
-                <div class="row"> <label for="varian">Varian</label>
-                  <input type="text" class="form-control mb-2" name="varian[]" placeholder="varian barang"
-                    autocomplete="off">
-                  <input type="text" class="form-control mb-2" name="varian[]" placeholder="varian barang"
-                    autocomplete="off">
-                  <input type="text" class="form-control mb-2" name="varian[]" placeholder="varian barang"
-                    autocomplete="off">
-                  <input type="text" class="form-control mb-2" name="varian[]" placeholder="varian barang"
-                    autocomplete="off">
-                  <input type="text" class="form-control mb-2" name="varian[]" placeholder="varian barang"
-                    autocomplete="off">
+              <div class="card card-outline card-warning p-3" style="max-height: 310px; overflow-y: auto;">
+                <div class="row">
+                  <label for="varian">Varian</label>
+                  <?php
+                  // Loop selalu 6 input
+                  for ($i = 0; $i < 6; $i++) {
+                    $value = isset($varianValues[$i]) ? $varianValues[$i] : '';
+                    ?>
+                    <input type="text" class="form-control mb-2" name="varian[]" value="<?= $value ?>"
+                      placeholder="varian barang" autocomplete="off">
+                  <?php } ?>
                 </div>
               </div>
             </div>
@@ -209,35 +261,64 @@ if (isset($_POST['simpan'])) {
       <!-- Jumlah -->
       <div class="card px-3 col-lg-12">
         <div class="row">
-          <div class="col-lg-1"> <label for="jumlah" class="mt-3">Jumlah</label> </div>
-          <div class="col-lg-3"> <input type="text" class="form-control mt-2" name="jumlah[]" placeholder="isi satuan 1"
-              required> </div>
-          <div class="col-lg-3 mb-2"> <input type="text" class="form-control mt-2" name="jumlah[]"
-              placeholder="isi satuan 2"> </div>
-          <div class="col-lg-3"> <input type="text" class="form-control mt-2" name="jumlah[]" placeholder="isi satuan 3"
-              > </div>
-        </div>
-      </div>
-      <div class="card px-3 pt-2 col-lg-12">
-        <div class="row"> <!-- Kolom Satuan -->
-          <div class="col-lg-6">
-            <div class="form-group"> <label for="satuan">Satuan</label> <input type="text" class="form-control"
-                name="satuan[]" placeholder="satuan brg 1 (Dus)" required> <input type="text" class="form-control mt-2"
-                name="satuan[]" placeholder="satuan brg 2 (Pak)"> <input type="text" class="form-control mt-2"
-                name="satuan[]" placeholder="satuan brg 3 (Bks)"> </div>
+          <div class="col-lg-1">
+            <label for="jumlah" class="mt-3">Jumlah</label>
           </div>
-
-          <div class="col-lg-6">
-            <div class="form-group"> <label for="harga_jual">Harga Jual</label> <input type="number"
-                class="form-control" name="harga_jual[]" placeholder="Rp 0" required> <input type="number"
-                class="form-control mt-2" name="harga_jual[]" placeholder="Rp 0"> <input type="number"
-                class="form-control mt-2" name="harga_jual[]" placeholder="Rp 0">
+          <?php
+          for ($i = 0; $i < 3; $i++) {
+            $value = isset($jumlahValues[$i]) ? $jumlahValues[$i] : '';
+            ?>
+            <div class="col-lg-3 mb-2">
+              <input type="text" class="form-control mt-2" name="jumlah[]" value="<?= $value ?>"
+                placeholder="isi satuan <?= $i + 1 ?>" <?= $i == 0 ? 'required' : '' ?>>
             </div>
-          </div>
+          <?php } ?>
         </div>
       </div>
-      </form>
+
+  <div class="card px-3 pt-2 col-lg-12">
+  <div class="row">
+    <!-- Kolom Satuan -->
+    <div class="col-lg-6">
+      <div class="form-group">
+        <label for="satuan">Satuan</label>
+        <input type="text" class="form-control" name="satuan[]" 
+               placeholder="satuan brg 1 (Dus)" 
+               value="<?= isset($satuanValues[0]['satuan']) ? $satuanValues[0]['satuan'] : '' ?>" required>
+
+        <input type="text" class="form-control mt-2" name="satuan[]" 
+               placeholder="satuan brg 2 (Pak)" 
+               value="<?= isset($satuanValues[1]['satuan']) ? $satuanValues[1]['satuan'] : '' ?>">
+
+        <input type="text" class="form-control mt-2" name="satuan[]" 
+               placeholder="satuan brg 3 (Bks)" 
+               value="<?= isset($satuanValues[2]['satuan']) ? $satuanValues[2]['satuan'] : '' ?>">
+      </div>
     </div>
-  </section>
+
+    <!-- Kolom Harga Jual -->
+    <div class="col-lg-6">
+      <div class="form-group">
+        <label for="harga_jual">Harga Jual</label>
+        <input type="number" class="form-control" name="harga_jual[]" 
+               placeholder="Rp 0" 
+               value="<?= isset($satuanValues[0]['harga_jual']) ? $satuanValues[0]['harga_jual'] : '' ?>" required>
+
+        <input type="number" class="form-control mt-2" name="harga_jual[]" 
+               placeholder="Rp 0" 
+               value="<?= isset($satuanValues[1]['harga_jual']) ? $satuanValues[1]['harga_jual'] : '' ?>">
+
+        <input type="number" class="form-control mt-2" name="harga_jual[]" 
+               placeholder="Rp 0" 
+               value="<?= isset($satuanValues[2]['harga_jual']) ? $satuanValues[2]['harga_jual'] : '' ?>">
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    </form>
+</div>
+</section>
 </div>
 <?php require "../template/footer.php"; ?>
