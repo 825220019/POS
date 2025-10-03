@@ -192,7 +192,6 @@ if (isset($_POST['simpan'])) {
               <i class="fas fa-times"></i> Reset
             </button>
           </div>
-
           <div class="row ml-2 mr-2">
             <div class="col-lg-6">
               <div class="card card-outline card-warning p-3">
@@ -245,7 +244,7 @@ if (isset($_POST['simpan'])) {
                       $suppliers = getData("SELECT * FROM tbl_supplier");
                       foreach ($suppliers as $supplier) { ?>
                         <option value="<?= $supplier['id_supplier'] ?>" <?= ($msg != '' && $barang['id_supplier'] == $supplier['id_supplier']) ? 'selected' : '' ?>>
-                          <?= $supplier['id_supplier'] . " | " . $supplier['nama'] ?>
+                          <?= $supplier['nama'] . " | " . $supplier['deskripsi']?>
                         </option>
                       <?php } ?>
                     </select>

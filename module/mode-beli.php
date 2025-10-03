@@ -1,10 +1,9 @@
 <?php
-
-function generateNo(){
+function generateNo()
+{
     global $koneksi;
 
-    $queryNo = mysqli_query($koneksi, "SELECT max(no_beli) as maxno FROM tbl_beli_head");
-
+    $queryNo = mysqli_query($koneksi, "SELECT MAX(no_beli) AS maxno FROM tbl_beli_head");
     $row = mysqli_fetch_assoc($queryNo);
     $maxno = $row["maxno"];
 
@@ -15,79 +14,126 @@ function generateNo(){
     return $maxno;
 }
 
-function totalBeli($noBeli){
+function getBarangDetailBySatuan($id_satuan) {
     global $koneksi;
-    $totalBeli = mysqli_query($koneksi,"SELECT sum(jml_harga) AS total FROM tbl_beli_detail
-    WHERE no_beli = '$noBeli'");
+
+    $query = "SELECT b.* 
+              FROM tbl_satuan s
+              JOIN tbl_barang b ON s.id_barang = b.id_barang
+              WHERE s.id_satuan = '$id_satuan'";
+
+    $result = mysqli_query($koneksi, $query);
+    return mysqli_fetch_assoc($result);
+}
+
+function getSatuanByBarang($id_barang)
+{
+    $query = "SELECT s.*, v.nama_varian 
+              FROM tbl_satuan s
+              LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
+              WHERE s.id_barang = '$id_barang'";
+    return getData($query);
+}
+
+function getBarangDetail($id_barang)
+{
+    $barang = getData("SELECT * FROM tbl_barang WHERE id_barang = '$id_barang'");
+    if (count($barang) > 0) {
+        return $barang[0];
+    }
+    return null;
+}
+
+$barangList = getData("SELECT * FROM tbl_barang ORDER BY nama_barang ASC");
+
+$selectBrg = null;
+$satuanList = [];
+if (isset($_GET['pilihbrg'])) {
+    $id_barang = $_GET['pilihbrg'];
+    $selectBrg = getBarangDetail($id_barang);
+    $satuanList = getSatuanByBarang($id_barang);
+}
+
+function totalBeli($noBeli)
+{
+    global $koneksi;
+    $totalBeli = mysqli_query($koneksi, "SELECT SUM(subtotal) AS total FROM tbl_beli_detail WHERE no_beli = '$noBeli'");
     $data = mysqli_fetch_assoc($totalBeli);
-    $total = $data["total"];
-
-    return $total;
+    return $data["total"];
 }
 
-function insert ($data){
+/**
+ * Simpan header + detail sekaligus
+ */
+function simpanPembelian($data)
+{
     global $koneksi;
 
-    $no = mysqli_real_escape_string($koneksi, $data['nobeli']);
-    $tgl = mysqli_real_escape_string($koneksi, $data['tglNota']);
-    $kode = mysqli_real_escape_string($koneksi, $data['kodeBrg']);
-    $nama = mysqli_real_escape_string($koneksi, $data['namaBrg']);
-    $qty = mysqli_real_escape_string($koneksi, $data['qty']);
-    $harga = mysqli_real_escape_string($koneksi, $data['harga']);
-    $jmlharga = mysqli_real_escape_string($koneksi, $data['jmlHarga']);
+    $nobeli    = mysqli_real_escape_string($koneksi, $data['nobeli']);
+    $tgl       = mysqli_real_escape_string($koneksi, $data['tglNota']);
+    $supplier  = mysqli_real_escape_string($koneksi, $data['supplier']);
+    $total     = mysqli_real_escape_string($koneksi, $data['total']);
+    $keterangan= isset($data['keterangan']) ? mysqli_real_escape_string($koneksi, $data['keterangan']) : '';
 
-    $cekbrg = mysqli_query($koneksi,"SELECT * FROM tbl_beli_detail WHERE no_beli =
-    '$no' AND kode_brg = '$kode'");
-    if (mysqli_num_rows($cekbrg)) {
-        echo "<script>
-            alert ('Barang sudah ada');
-        </script>";
-        return false;
+    // 1. Simpan header dulu
+    $sqlHeader = "INSERT INTO tbl_beli_head (no_beli, tgl_beli, id_supplier, total, keterangan)
+                  VALUES ('$nobeli', '$tgl', '$supplier', $total, '$keterangan')";
+    if (!mysqli_query($koneksi, $sqlHeader)) {
+        die("Error simpan header: " . mysqli_error($koneksi));
+    }
+
+    // 2. Simpan detail
+    $idSatuanArr = $data['kodeBrg']; // array id_satuan
+    $qtyArr      = $data['qty'];     // array qty
+    $hargaArr    = $data['harga'];   // array harga
+    $subtotalArr = $data['jmlHarga']; // array subtotal
+
+    foreach ($idSatuanArr as $i => $idSatuan) {
+        $idSatuan = mysqli_real_escape_string($koneksi, $idSatuan);
+        $qty      = mysqli_real_escape_string($koneksi, $qtyArr[$i]);
+        $harga    = mysqli_real_escape_string($koneksi, $hargaArr[$i]);
+        $subtotal = mysqli_real_escape_string($koneksi, $subtotalArr[$i]);
+
+        if ($qty <= 0) continue;
+
+        // Cek duplikasi
+        $cek = mysqli_query($koneksi, "SELECT * FROM tbl_beli_detail WHERE no_beli='$nobeli' AND id_satuan='$idSatuan'");
+        if (mysqli_num_rows($cek)) continue;
+
+        // Insert detail
+        $sqlDetail = "INSERT INTO tbl_beli_detail (no_beli, id_satuan, qty, harga, subtotal)
+                      VALUES ('$nobeli', '$idSatuan', $qty, $harga, $subtotal)";
+        if (!mysqli_query($koneksi, $sqlDetail)) {
+            die("Error simpan detail: " . mysqli_error($koneksi));
+        }
+
+        // Update harga beli terakhir di tbl_barang
+        $barang = mysqli_query($koneksi, "SELECT id_barang FROM tbl_satuan WHERE id_satuan='$idSatuan'");
+        $row = mysqli_fetch_assoc($barang);
+        $idBarang = $row['id_barang'];
+
+        mysqli_query($koneksi, "UPDATE tbl_barang SET harga_beli='$harga' WHERE id_barang='$idBarang'");
+
+        // Update stok di tbl_satuan
+        mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock+$qty WHERE id_satuan='$idSatuan'");
+    }
+
+    return true;
 }
 
-
-if (empty($qty)){
-    echo "<script>
-            alert ('Barang sudah diinput di hapus dulu');
-        </script>";
-        return false;
-} else {
-    $sqlbeli = "INSERT INTO tbl_beli_detail VALUES (null, '$no', '$tgl',
-    '$kode', '$nama', $qty, $harga, $jmlharga)";
-    mysqli_query($koneksi, $sqlbeli);
-}
-
-mysqli_query($koneksi, "UPDATE tbl_barang SET stock = stock + $qty WHERE
-id_barang = '$kode'");
-
-return mysqli_affected_rows($koneksi);
-} 
-
-function delete($idbrg, $idbeli, $qty){
+/**
+ * Hapus detail pembelian
+ */
+function delete($idSatuan, $idbeli, $qty)
+{
     global $koneksi;
 
-    $sqlDel = "DELETE FROM tbl_beli_detail WHERE kode_brg = '$idbrg' AND no_beli = 
-    '$idbeli'";
+    // Hapus detail
+    $sqlDel = "DELETE FROM tbl_beli_detail WHERE id_satuan='$idSatuan' AND no_beli='$idbeli'";
     mysqli_query($koneksi, $sqlDel);
 
-    mysqli_query($koneksi, "UPDATE tbl_barang SET stock = stock - $qty WHERE
-    id_barang = '$idbrg'");
-
-    return mysqli_affected_rows($koneksi);
-}
-
-function simpan ($data){
-    global $koneksi;
-
-    $nobeli = mysqli_real_escape_string($koneksi, $data['nobeli']);
-    $tgl = mysqli_real_escape_string($koneksi, $data['tglNota']);
-    $total = mysqli_real_escape_string($koneksi, $data['total']);
-    $supplier = mysqli_real_escape_string($koneksi, $data['supplier']);
-    $keterangan = mysqli_real_escape_string($koneksi, $data['supplier']);
-
-    $sqlbeli = "INSERT INTO tbl_beli_head VALUES ('$nobeli', '$tgl', '$supplier', $total,
-    '$keterangan')";
-    mysqli_query($koneksi, $sqlbeli);   
+    // Kurangi stok
+    mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock-$qty WHERE id_satuan='$idSatuan'");
 
     return mysqli_affected_rows($koneksi);
 }
