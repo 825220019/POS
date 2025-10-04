@@ -24,16 +24,18 @@ if (isset($_GET['msg'])) {
     $msg = '';
 }
 
-if ($msg == 'deleted') {
-    $idbrg = $_GET['idbrg'];
-    $idbeli = $_GET['idbeli'];
-    $qty = $_GET['qty'];
-    $tgl = $_GET['tgl'];
-    delete($idbrg, $idbeli, $qty);
-    echo "<script>
-            document.location = '?tgl=$tgl'
-        </script>";
+if (isset($_GET['hapus'])) {
+    $key = $_GET['hapus'];
+    unset($_SESSION['cart'][$key]);
+    // reindex array biar rapih
+    $_SESSION['cart'] = array_values($_SESSION['cart']);
+
+    $tgl = $_POST['tglNota'];
+    $supplier = $_POST['supplier'];
+    echo "<script>document.location='?tgl=$tgl&supplier=$supplier'</script>";
+
 }
+
 
 if (isset($_GET['id_barang'])) {
     $id_barang = $_GET['id_barang'];
@@ -41,31 +43,88 @@ if (isset($_GET['id_barang'])) {
     $satuanList = [];
     if ($kode) {
         $satuanList = getData("
-        SELECT s.satuan, s.harga_jual, s.stock 
-        FROM tbl_satuan s
-        JOIN tbl_varian v ON s.id_varian = v.id_varian
-        WHERE v.id_barang = '$kode'
-    ");
+            SELECT s.satuan, s.harga_jual, s.stock 
+            FROM tbl_satuan s
+            JOIN tbl_varian v ON s.id_varian = v.id_varian
+            WHERE v.id_barang = '$kode'
+        ");
     }
+}
+
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
 }
 
 if (isset($_POST['addbrg'])) {
+    $idSatuan = $_POST['satuan'];
+    $qty = (int) $_POST['qty'];
+    $harga = (int) $_POST['harga'];
+    $subtotal = $qty * $harga;
+
+    // simpan ke session cart
+    $_SESSION['cart'][] = [
+        'id_satuan' => $idSatuan,
+        'qty' => $qty,
+        'harga' => $harga,
+        'subtotal' => $subtotal
+    ];
+
+    // biar reload tetap ke tanggal yang sama
     $tgl = $_POST['tglNota'];
-    if (insert($_POST)) {
-        echo "<script>
-            document.location = '?tgl=$tgl'
-        </script>";
-    }
+    $supplier = $_POST['supplier'];
+    echo "<script>document.location='?tgl=$tgl&supplier=$supplier'</script>";
+
 }
 
+
 if (isset($_POST['simpan'])) {
-    if (simpan($_POST)) {
-        echo "<script>
-            alert ('data pembelian berhasil disimpan')
-            document.location = 'index.php'
-        </script>";
+    $nobeli = $_POST['nobeli'];
+    $tgl = $_POST['tglNota'];
+    $supplier = $_POST['supplier'];
+    $total = 0;
+    if (!empty($_SESSION['cart'])) {
+        foreach ($_SESSION['cart'] as $item) {
+            $total += $item['subtotal'];
+        }
     }
+
+
+    // insert ke tbl_beli_head
+    mysqli_query($koneksi, "INSERT INTO tbl_beli_head (no_beli, tgl_beli, id_supplier, total, created_at) 
+                                VALUES ('$nobeli', '$tgl', '$supplier', '$total', NOW())");
+
+    // insert detail
+    foreach ($_SESSION['cart'] as $item) {
+        $idSatuan = $item['id_satuan'];
+        $qty = $item['qty'];
+        $harga = $item['harga'];
+        $subtotal = $item['subtotal'];
+
+        mysqli_query($koneksi, "INSERT INTO tbl_beli_detail (no_beli, id_satuan, qty, harga, subtotal) 
+                                    VALUES ('$nobeli','$idSatuan','$qty','$harga','$subtotal')");
+
+        // update stok
+        mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock+$qty WHERE id_satuan='$idSatuan'");
+
+        $qBarang = mysqli_query($koneksi, "SELECT id_barang FROM tbl_satuan WHERE id_satuan='$idSatuan'");
+        $barangRow = mysqli_fetch_assoc($qBarang);
+        if ($barangRow) {
+            $idBarang = $barangRow['id_barang'];
+            mysqli_query($koneksi, "UPDATE tbl_barang SET harga_beli='$harga' WHERE id_barang='$idBarang'");
+        }
+
+    }
+
+    // bersihkan cart
+    unset($_SESSION['cart']);
+
+    echo "<script>
+                alert('Data pembelian berhasil disimpan');
+                document.location='index.php';
+            </script>";
 }
+
+
 
 $noBeli = generateNo()
 
@@ -124,16 +183,17 @@ $noBeli = generateNo()
                             <div class="form-group row mb-2">
                                 <label for="supplier" class="col-sm-2 col-form-label">Supplier</label>
                                 <div class="col-sm-10">
-                                    <select name="supplier" id="suppplier" class="form-control form-control-sm">
+                                    <select name="supplier" id="supplier" class="form-control form-control-sm" required>
                                         <option value="">-- Pilih Supplier --</option>
                                         <?php
-                                        $suppliers = getData("SELECT * FROM tbl_supplier");
-                                        foreach ($suppliers as $supplier) { ?>
-                                            <option value="<?= $supplier['id_supplier'] ?>" <?= ($msg != '' && $barang['id_supplier'] == $supplier['id_supplier']) ? 'selected' : '' ?>>
-                                                <?= $supplier['nama'] . " | " . $supplier['deskripsi'] ?>
-                                            </option>
-                                            <?php
-                                        } ?>
+                                        $suppliers = mysqli_query($koneksi, "SELECT * FROM tbl_supplier");
+                                        while ($s = mysqli_fetch_assoc($suppliers)) {
+                                            $selected = (isset($_GET['supplier']) && $_GET['supplier'] == $s['id_supplier']) ? 'selected' : '';
+                                            echo "<option value='{$s['id_supplier']}' $selected>
+                    {$s['nama']} | {$s['deskripsi']}
+                </option>";
+                                        }
+                                        ?>
                                     </select>
                                 </div>
                             </div>
@@ -143,8 +203,9 @@ $noBeli = generateNo()
                         <div class="card card-outline card-danger pt-3 px-3 pb-2">
                             <h6 class="font-weight-bold text-right">Total Pembelian</h6>
                             <h1 class="font-weight-bold text-right" style="font-size:40pt;">
-                                <input type="hidden" name="total" value="<?= totalBeli($noBeli) ?>">
-                                <?= number_format(totalBeli($noBeli), 0, ',', '.') ?></h6>
+                                <input type="hidden" name="total" value="<?= $total ?? 0 ?>">
+                                <?= number_format($total ?? 0, 0, ',', '.') ?>
+                            </h1>
                         </div>
                     </div>
                 </div>
@@ -160,9 +221,9 @@ $noBeli = generateNo()
                                     <?php
                                     foreach ($barangList as $b) {
                                         echo "<option value='{$b['nama_barang']}' 
-                data-id='{$b['id_barang']}' 
-                data-harga='{$b['harga_beli']}' 
-                data-stock='{$b['stock_minimal']}'>";
+                    data-id='{$b['id_barang']}' 
+                    data-harga='{$b['harga_beli']}' 
+                    data-stock='{$b['stock_minimal']}'>";
                                     }
                                     ?>
                                 </datalist>
@@ -224,24 +285,34 @@ $noBeli = generateNo()
                         <tbody>
                             <?php
                             $no = 1;
-                            $brgDetail = getData("SELECT * FROM tbl_beli_detail WHERE no_beli = '$noBeli'");
-                            foreach ($brgDetail as $detail) { ?>
-                                <tr>
-                                    <td><?= $no++ ?></td>
-                                    <td><?= $detail['kode_brg'] ?></td>
-                                    <td><?= $detail['nama_brg'] ?></td>
-                                    <td class="text-right"><?= number_format($detail['harga_beli'], 0, ',', '.') ?></td>
-                                    <td class="text-right"><?= $detail['qty'] ?></td>
-                                    <td class="text-right"><?= number_format($detail['jml_harga'], 0, ',', '.') ?></td>
-                                    <td class="text-center">
-                                        <a href="?idbrg=<?= $detail['kode_brg'] ?>
-                                        &idbeli=<?= $detail['no_beli'] ?>&qty=<?=
-                                              $detail['qty'] ?>&tgl=<?= $detail['tgl_beli'] ?>
-                                        &msg=deleted" class="btn btn-sm btn-danger" title="hapus barang"
-                                            onclick="return confirm('Mau hapus barang ?')"><i class="fas fa-trash"></i></a>
-                                    </td>
-                                </tr>
-                                <?php
+                            $total = 0;
+                            if (!empty($_SESSION['cart'])) {
+                                foreach ($_SESSION['cart'] as $key => $item) {
+                                    // Ambil detail barang + satuan buat ditampilkan
+                                    $q = mysqli_query($koneksi, "SELECT b.nama_barang, s.satuan 
+                                        FROM tbl_satuan s 
+                                        JOIN tbl_barang b ON s.id_barang=b.id_barang 
+                                        WHERE s.id_satuan='{$item['id_satuan']}'");
+                                    $row = mysqli_fetch_assoc($q);
+
+                                    $total += $item['subtotal'];
+                                    ?>
+                                    <tr>
+                                        <td><?= $no++ ?></td>
+                                        <td><?= $item['id_satuan'] ?></td>
+                                        <td><?= $row['nama_barang'] ?> (<?= $row['satuan'] ?>)</td>
+                                        <td class="text-right"><?= number_format($item['harga'], 0, ',', '.') ?></td>
+                                        <td class="text-right"><?= $item['qty'] ?></td>
+                                        <td class="text-right"><?= number_format($item['subtotal'], 0, ',', '.') ?></td>
+                                        <td class="text-center">
+                                            <a href="?hapus=<?= $key ?>&tgl=<?= $_GET['tgl'] ?>" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Hapus barang ini?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php
+                                }
                             }
                             ?>
                         </tbody>
@@ -260,6 +331,13 @@ $noBeli = generateNo()
     let jmlHarga = document.getElementById('jmlHarga');
     let satuan = document.getElementById('satuan'); // dropdown satuan
 
+    // Fungsi hitung jumlah harga
+    function hitungTotal() {
+        let q = parseFloat(qty.value) || 0;
+        let h = parseFloat(harga.value) || 0;
+        jmlHarga.value = q * h;
+    }
+
     namaBrg.addEventListener('input', function () {
         let val = this.value;
         let opts = document.querySelectorAll('#listBarang option');
@@ -268,11 +346,10 @@ $noBeli = generateNo()
         opts.forEach(option => {
             if (option.value === val) {
                 let idBarang = option.getAttribute('data-id');
-                kodeBrg.value = idBarang; // isi hidden input
+                kodeBrg.value = idBarang;
 
                 console.log("ID barang:", idBarang);
 
-                // fetch data satuan
                 fetch('get_satuan.php?id_barang=' + idBarang)
                     .then(res => res.json())
                     .then(data => {
@@ -280,20 +357,16 @@ $noBeli = generateNo()
 
                         satuan.innerHTML = '<option value="">-- Pilih Satuan --</option>';
 
-                        // kalau data berupa array langsung
                         if (Array.isArray(data)) {
                             data.forEach(item => {
                                 let opt = document.createElement('option');
-                                opt.value = item.satuan;
-                                opt.text = item.satuan;
+                                opt.value = item.id_satuan;
+                                opt.text = item.satuan + (item.nama_varian ? " - " + item.nama_varian : "");
                                 opt.setAttribute('data-harga', item.harga_jual);
                                 opt.setAttribute('data-stok', item.stock);
                                 satuan.appendChild(opt);
                             });
-                        }
-
-                        // kalau response ternyata object dengan key "data"
-                        else if (data.data && Array.isArray(data.data)) {
+                        } else if (data.data && Array.isArray(data.data)) {
                             data.data.forEach(item => {
                                 let opt = document.createElement('option');
                                 opt.value = item.satuan;
@@ -303,30 +376,28 @@ $noBeli = generateNo()
                                 satuan.appendChild(opt);
                             });
                         }
-
                     })
                     .catch(err => console.error("Fetch error:", err));
-
             }
         });
 
         if (!found) {
-            kodeBrg.value = ""; // reset kalau barang tidak cocok
+            kodeBrg.value = "";
         }
     });
-
 
     satuan.addEventListener('change', function () {
         let selected = this.options[this.selectedIndex];
         harga.value = selected.getAttribute('data-harga') || '';
         stok.value = selected.getAttribute('data-stok') || '';
+        hitungTotal();
     });
 
-    qty.addEventListener('input', function () {
-        jmlHarga.value = qty.value * harga.value;
-    })
-
+    // Tambahin event di qty dan harga
+    qty.addEventListener('input', hitungTotal);
+    harga.addEventListener('input', hitungTotal);
 </script>
+
 <?php
 require "../template/footer.php";
 ?>

@@ -27,15 +27,15 @@ if (isset($_GET['msg'])) {
   $barang = getData($sqlEdit)[0];
   // ambil varian dari database
   $sqlVarian = "SELECT * FROM tbl_varian WHERE id_barang = '$id'";
-$varians = getData($sqlVarian);
+  $varians = getData($sqlVarian);
 
-if (!empty($varians)) {
+  if (!empty($varians)) {
     $sqlSatuan = "SELECT * FROM tbl_satuan WHERE id_varian IN (SELECT id_varian FROM tbl_varian WHERE id_barang = '$id')";
-} else {
+  } else {
     $sqlSatuan = "SELECT * FROM tbl_satuan WHERE id_barang = '$id'";
-}
+  }
 
-$satuanData = getData($sqlSatuan);
+  $satuanData = getData($sqlSatuan);
 
 
   // ubah ke array biasa agar gampang dipanggil
@@ -55,15 +55,15 @@ $satuanData = getData($sqlSatuan);
   }
 
   $satuanValues = [];
-if (!empty($satuanData)) {
-  foreach ($satuanData as $s) {
-    $satuanValues[] = [
-      'jumlah_isi' => $s['jumlah_isi'],
-      'satuan'     => $s['satuan'],
-      'harga_jual' => $s['harga_jual']
-    ];
+  if (!empty($satuanData)) {
+    foreach ($satuanData as $s) {
+      $satuanValues[] = [
+        'jumlah_isi' => $s['jumlah_isi'],
+        'satuan' => $s['satuan'],
+        'harga_jual' => $s['harga_jual']
+      ];
+    }
   }
-}
 
 } else {
   $msg = "";
@@ -80,17 +80,17 @@ if (isset($_POST['simpan'])) {
       echo "<script>document.location.href = 'index.php';</script>";
     }
   } else {
-  $idBarang = insert($_POST);
-  if ($idBarang) {
-    $alert = '
+    $idBarang = insert($_POST);
+    if ($idBarang) {
+      $alert = '
     <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
       <strong>Berhasil!</strong> Barang berhasil ditambahkan.
       <button type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
       </button>
     </div>';
+    }
   }
-}
 
 }
 
@@ -132,15 +132,15 @@ if (isset($_POST['simpan'])) {
     }
 
     // Format input menjadi rupiah otomatis saat mengetik
-  document.querySelectorAll('.harga_jual').forEach(input => {
-    input.addEventListener('input', function(e) {
-      let value = this.value.replace(/\D/g,''); // hapus semua non-digit
-      if(value) {
-        value = new Intl.NumberFormat('id-ID').format(value);
-      }
-      this.value = value;
+    document.querySelectorAll('.harga_jual').forEach(input => {
+      input.addEventListener('input', function (e) {
+        let value = this.value.replace(/\D/g, ''); // hapus semua non-digit
+        if (value) {
+          value = new Intl.NumberFormat('id-ID').format(value);
+        }
+        this.value = value;
+      });
     });
-  });
 
     // Jalankan saat load
     updatePlaceholders();
@@ -200,6 +200,11 @@ if (isset($_POST['simpan'])) {
                   <div class="col-sm-9">
                     <input type="text" name="kode" class="form-control" id="kode"
                       value="<?= $msg != '' ? $barang['id_barang'] : generateId() ?>" readonly>
+
+                    <?php if ($msg != ''): ?>
+                      <input type="hidden" name="id_barang" value="<?= $barang['id_barang'] ?>">
+                    <?php endif; ?>
+
                   </div>
                 </div>
 
@@ -244,7 +249,7 @@ if (isset($_POST['simpan'])) {
                       $suppliers = getData("SELECT * FROM tbl_supplier");
                       foreach ($suppliers as $supplier) { ?>
                         <option value="<?= $supplier['id_supplier'] ?>" <?= ($msg != '' && $barang['id_supplier'] == $supplier['id_supplier']) ? 'selected' : '' ?>>
-                          <?= $supplier['nama'] . " | " . $supplier['deskripsi']?>
+                          <?= $supplier['nama'] . " | " . $supplier['deskripsi'] ?>
                         </option>
                       <?php } ?>
                     </select>
@@ -291,49 +296,44 @@ if (isset($_POST['simpan'])) {
         </div>
       </div>
 
-  <div class="card px-3 pt-2 col-lg-12">
-  <div class="row">
-    <!-- Kolom Satuan -->
-    <div class="col-lg-6">
-      <div class="form-group">
-        <label for="satuan">Satuan</label>
-        <input type="text" class="form-control" name="satuan[]" 
-               placeholder="satuan brg 1 (Dus)" 
-               value="<?= isset($satuanValues[0]['satuan']) ? $satuanValues[0]['satuan'] : '' ?>" required>
+      <div class="card px-3 pt-2 col-lg-12">
+        <div class="row">
+          <!-- Kolom Satuan -->
+          <div class="col-lg-6">
+            <div class="form-group">
+              <label for="satuan">Satuan</label>
+              <input type="text" class="form-control" name="satuan[]" placeholder="satuan brg 1 (Dus)"
+                value="<?= isset($satuanValues[0]['satuan']) ? $satuanValues[0]['satuan'] : '' ?>" required>
 
-        <input type="text" class="form-control mt-2" name="satuan[]" 
-               placeholder="satuan brg 2 (Pak)" 
-               value="<?= isset($satuanValues[1]['satuan']) ? $satuanValues[1]['satuan'] : '' ?>">
+              <input type="text" class="form-control mt-2" name="satuan[]" placeholder="satuan brg 2 (Pak)"
+                value="<?= isset($satuanValues[1]['satuan']) ? $satuanValues[1]['satuan'] : '' ?>">
 
-        <input type="text" class="form-control mt-2" name="satuan[]" 
-               placeholder="satuan brg 3 (Bks)" 
-               value="<?= isset($satuanValues[2]['satuan']) ? $satuanValues[2]['satuan'] : '' ?>">
+              <input type="text" class="form-control mt-2" name="satuan[]" placeholder="satuan brg 3 (Bks)"
+                value="<?= isset($satuanValues[2]['satuan']) ? $satuanValues[2]['satuan'] : '' ?>">
+            </div>
+          </div>
+
+          <!-- Kolom Harga Jual -->
+          <div class="col-lg-6">
+            <div class="form-group">
+              <label for="harga_jual">Harga Jual</label>
+              <input type="text" class="form-control harga_jual" name="harga_jual[]" placeholder="Rp 0"
+                value="<?= isset($satuanValues[0]['harga_jual']) ? number_format($satuanValues[0]['harga_jual'], 0, ',', '.') : '' ?>"
+                required>
+
+              <input type="text" class="form-control mt-2 harga_jual" name="harga_jual[]" placeholder="Rp 0"
+                value="<?= isset($satuanValues[1]['harga_jual']) ? number_format($satuanValues[1]['harga_jual'], 0, ',', '.') : '' ?>">
+
+              <input type="text" class="form-control mt-2 harga_jual" name="harga_jual[]" placeholder="Rp 0"
+                value="<?= isset($satuanValues[2]['harga_jual']) ? number_format($satuanValues[2]['harga_jual'], 0, ',', '.') : '' ?>">
+            </div>
+          </div>
+        </div>
       </div>
+
+
+      </form>
     </div>
-
-    <!-- Kolom Harga Jual -->
-    <div class="col-lg-6">
-      <div class="form-group">
-    <label for="harga_jual">Harga Jual</label>
-    <input type="text" class="form-control harga_jual" name="harga_jual[]" 
-           placeholder="Rp 0" 
-           value="<?= isset($satuanValues[0]['harga_jual']) ? number_format($satuanValues[0]['harga_jual'], 0, ',', '.') : '' ?>" required>
-
-    <input type="text" class="form-control mt-2 harga_jual" name="harga_jual[]" 
-           placeholder="Rp 0" 
-           value="<?= isset($satuanValues[1]['harga_jual']) ? number_format($satuanValues[1]['harga_jual'], 0, ',', '.') : '' ?>">
-
-    <input type="text" class="form-control mt-2 harga_jual" name="harga_jual[]" 
-           placeholder="Rp 0" 
-           value="<?= isset($satuanValues[2]['harga_jual']) ? number_format($satuanValues[2]['harga_jual'], 0, ',', '.') : '' ?>">
-</div>
-    </div>
-  </div>
-</div>
-
-
-    </form>
-</div>
-</section>
+  </section>
 </div>
 <?php require "../template/footer.php"; ?>

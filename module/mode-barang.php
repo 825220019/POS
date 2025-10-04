@@ -38,39 +38,50 @@ function insert($post)
                   VALUES ('$id_barang', '$nama_barang', '$supplier', '$harga_beli', '$harga_jual', '$stock_minimal', NOW())";
     mysqli_query($koneksi, $sqlBarang);
 
-    // cek varian
-    if (!empty($post['varian'])) {
-    for ($i = 0; $i < count($post['varian']); $i++) {
-        $nama_varian = mysqli_real_escape_string($koneksi, $post['varian'][$i]);
-        if ($nama_varian != '') {
+    // ambil semua varian
+    $varians = array_filter($post['varian']); // hapus yang kosong
+    $satuans = array_filter($post['satuan']); // hapus yang kosong
+
+    // kalau ada varian
+    if (!empty($varians)) {
+        foreach ($varians as $v) {
+            $nama_varian = mysqli_real_escape_string($koneksi, $v);
             mysqli_query($koneksi, "INSERT INTO tbl_varian (id_barang, nama_varian) VALUES ('$id_barang', '$nama_varian')");
             $id_varian = mysqli_insert_id($koneksi);
-        } else {
-            $id_varian = null; // kalau varian kosong
+
+            // loop satuan untuk setiap varian
+            for ($i = 0; $i < count($post['satuan']); $i++) {
+                if (!empty($post['satuan'][$i])) {
+                    $satuan = mysqli_real_escape_string($koneksi, $post['satuan'][$i]);
+                    $jumlah = mysqli_real_escape_string($koneksi, $post['jumlah'][$i]);
+                    $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][$i]));
+                    $stock = 0;
+
+                    $sqlSatuan = "INSERT INTO tbl_satuan (id_barang, id_varian, satuan, jumlah_isi, harga_jual, stock) 
+                                  VALUES ('$id_barang', '$id_varian', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
+                    mysqli_query($koneksi, $sqlSatuan);
+                }
+            }
         }
+    } else {
+        // kalau tidak ada varian → simpan satuan langsung
+        for ($i = 0; $i < count($post['satuan']); $i++) {
+            if (!empty($post['satuan'][$i])) {
+                $satuan = mysqli_real_escape_string($koneksi, $post['satuan'][$i]);
+                $jumlah = mysqli_real_escape_string($koneksi, $post['jumlah'][$i]);
+                $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][$i]));
+                $stock = 0;
 
-        // simpan satuan meski varian kosong
-        if (!empty($post['satuan'][$i])) {
-            $satuan = mysqli_real_escape_string($koneksi, $post['satuan'][$i]);
-            $jumlah = mysqli_real_escape_string($koneksi, $post['jumlah'][$i]);
-            $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][$i]));
-            $stock = 0;
-
-            if ($id_varian) {
-                $sqlSatuan = "INSERT INTO tbl_satuan (id_varian, satuan, jumlah_isi, harga_jual, stock) 
-                              VALUES ('$id_varian', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
-            } else {
                 $sqlSatuan = "INSERT INTO tbl_satuan (id_barang, satuan, jumlah_isi, harga_jual, stock) 
                               VALUES ('$id_barang', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
+                mysqli_query($koneksi, $sqlSatuan);
             }
-            mysqli_query($koneksi, $sqlSatuan);
         }
     }
-}
-
 
     return $id_barang;
 }
+
 
 function delete($id)
 {
@@ -94,79 +105,77 @@ function delete($id)
     return mysqli_affected_rows($koneksi);
 }
 
-function update($data)
+function update($post)
 {
     global $koneksi;
-    $id = mysqli_real_escape_string($koneksi, $data['kode']);
-$name = mysqli_real_escape_string($koneksi, $data['name']);
-$stockmin = mysqli_real_escape_string($koneksi, $data['stock_minimal']);
-$harga_beli = mysqli_real_escape_string($koneksi, str_replace('.', '', $data['harga_beli']));
 
-// cek apakah harga_jual array
-if (is_array($data['harga_jual'])) {
-    $harga_jual = mysqli_real_escape_string($koneksi, str_replace('.', '', $data['harga_jual'][0]));
-} else {
-    $harga_jual = mysqli_real_escape_string($koneksi, str_replace('.', '', $data['harga_jual']));
-}
+    $id_barang    = mysqli_real_escape_string($koneksi, $post['id_barang']);
+    $nama_barang  = mysqli_real_escape_string($koneksi, $post['name']);
+    $supplier     = mysqli_real_escape_string($koneksi, $post['supplier']);
+    $stock_minimal= mysqli_real_escape_string($koneksi, $post['stock_minimal']);
+    $harga_beli   = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_beli']));
 
-
-    // update barang utama
-    mysqli_query($koneksi, "UPDATE tbl_barang SET 
-        nama_barang = '$name', 
-        stock_minimal = '$stockmin',
-        harga_beli = '$harga_beli',
-        harga_jual = '$harga_jual'
-        WHERE id_barang = '$id'");
-
-    // hapus satuan & varian lama
-    $varian = mysqli_query($koneksi, "SELECT id_varian FROM tbl_varian WHERE id_barang = '$id'");
-    while ($row = mysqli_fetch_assoc($varian)) {
-        mysqli_query($koneksi, "DELETE FROM tbl_satuan WHERE id_varian = '" . $row['id_varian'] . "'");
-    }
-    mysqli_query($koneksi, "DELETE FROM tbl_varian WHERE id_barang = '$id'");
-
-    // hapus satuan langsung jika tidak ada varian
-    if (empty(array_filter($data['varian']))) {
-        mysqli_query($koneksi, "DELETE FROM tbl_satuan WHERE id_barang = '$id'");
+    if (is_array($post['harga_jual'])) {
+        $harga_jual = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][0]));
+    } else {
+        $harga_jual = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
     }
 
-    // tambah varian & satuan baru
-    if (!empty($data['varian']) && array_filter($data['varian'])) {
-        for ($i = 0; $i < count($data['varian']); $i++) {
-            if (!empty($data['varian'][$i])) {
-                $nama_varian = mysqli_real_escape_string($koneksi, $data['varian'][$i]);
-                $sqlVarian = "INSERT INTO tbl_varian (id_barang, nama_varian) VALUES ('$id', '$nama_varian')";
-                mysqli_query($koneksi, $sqlVarian);
-                $id_varian = mysqli_insert_id($koneksi);
+    // update tbl_barang
+    $sqlBarang = "UPDATE tbl_barang 
+                  SET nama_barang='$nama_barang', 
+                      id_supplier='$supplier', 
+                      harga_beli='$harga_beli', 
+                      harga_jual='$harga_jual', 
+                      stock_minimal='$stock_minimal' 
+                  WHERE id_barang='$id_barang'";
+    mysqli_query($koneksi, $sqlBarang);
 
-                if (!empty($data['satuan'][$i])) {
-                    $satuan = mysqli_real_escape_string($koneksi, $data['satuan'][$i]);
-                    $jumlah = mysqli_real_escape_string($koneksi, $data['jumlah'][$i]);
-                    $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $data['harga_jual'][$i]));
-                    $stock = 0;
+    // Hapus data varian & satuan lama (reset)
+    mysqli_query($koneksi, "DELETE FROM tbl_satuan WHERE id_barang='$id_barang'");
+    mysqli_query($koneksi, "DELETE FROM tbl_varian WHERE id_barang='$id_barang'");
 
-                    $sqlSatuan = "INSERT INTO tbl_satuan (id_varian, satuan, jumlah_isi, harga_jual, stock) 
-                                  VALUES ('$id_varian', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
+    // Ambil input baru
+    $varians = array_filter($post['varian']);
+    $satuans = array_filter($post['satuan']);
+
+    if (!empty($varians)) {
+        foreach ($varians as $v) {
+            $nama_varian = mysqli_real_escape_string($koneksi, $v);
+            mysqli_query($koneksi, "INSERT INTO tbl_varian (id_barang, nama_varian) VALUES ('$id_barang', '$nama_varian')");
+            $id_varian = mysqli_insert_id($koneksi);
+
+            // loop satuan
+            for ($i = 0; $i < count($post['satuan']); $i++) {
+                if (!empty($post['satuan'][$i])) {
+                    $satuan = mysqli_real_escape_string($koneksi, $post['satuan'][$i]);
+                    $jumlah = mysqli_real_escape_string($koneksi, $post['jumlah'][$i]);
+                    $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][$i]));
+                    $stock = 0; // reset stok (opsional, bisa ambil dari input kalau perlu)
+
+                    $sqlSatuan = "INSERT INTO tbl_satuan (id_barang, id_varian, satuan, jumlah_isi, harga_jual, stock) 
+                                  VALUES ('$id_barang', '$id_varian', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
                     mysqli_query($koneksi, $sqlSatuan);
                 }
             }
         }
     } else {
-        // varian kosong → simpan satuan langsung ke id_barang
-        for ($i = 0; $i < count($data['satuan']); $i++) {
-            if (!empty($data['satuan'][$i])) {
-                $satuan = mysqli_real_escape_string($koneksi, $data['satuan'][$i]);
-                $jumlah = mysqli_real_escape_string($koneksi, $data['jumlah'][$i]);
-                $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $data['harga_jual'][$i]));
+        // tanpa varian → langsung ke tbl_satuan
+        for ($i = 0; $i < count($post['satuan']); $i++) {
+            if (!empty($post['satuan'][$i])) {
+                $satuan = mysqli_real_escape_string($koneksi, $post['satuan'][$i]);
+                $jumlah = mysqli_real_escape_string($koneksi, $post['jumlah'][$i]);
+                $harga_jual_satuan = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][$i]));
                 $stock = 0;
 
                 $sqlSatuan = "INSERT INTO tbl_satuan (id_barang, satuan, jumlah_isi, harga_jual, stock) 
-                              VALUES ('$id', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
+                              VALUES ('$id_barang', '$satuan', '$jumlah', '$harga_jual_satuan', '$stock')";
                 mysqli_query($koneksi, $sqlSatuan);
             }
         }
     }
 
-    return mysqli_affected_rows($koneksi);
+    return true;
 }
+
 ?>

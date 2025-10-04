@@ -116,8 +116,8 @@ if ($msg == 'updated') {
                 <tr>
                   <td><?= $brg['id_barang']; ?></td>
                   <td><?= $brg['nama_barang']; ?></td>
-                  <td class="text-center"><?= number_format($brg['harga_beli'], 0, ',', '.'); ?></td>
-                  <td class="text-center"><?= number_format($brg['harga_jual'], 0, ',', '.'); ?></td>
+                  <td><?= number_format($brg['harga_beli'], 0, ',', '.'); ?></td>
+                  <td><?= number_format($brg['harga_jual'], 0, ',', '.'); ?></td>
                   <td>
                     <a href="form-barang.php?id=<?= $brg['id_barang'] ?>&msg=editing" class="btn btn-warning btn-sm"
                       title="edit barang">
