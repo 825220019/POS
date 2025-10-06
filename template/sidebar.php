@@ -64,7 +64,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="<?= $main_url ?>penjualan/index.php" class="nav-link">
             <i class="nav-icon fas fa-file-invoice text-sm"></i>
             <p>
               Penjualan
