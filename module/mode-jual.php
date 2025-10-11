@@ -67,43 +67,56 @@ function insert($data)
 {
     global $koneksi;
 
-    $nojual     = mysqli_real_escape_string($koneksi, $data['nojual']);
-    $idSatuan   = mysqli_real_escape_string($koneksi, $data['satuan']);
-    $qty        = (int)$data['qty'];
-    $harga      = (int)$data['harga'];
-    $jmlHarga   = $qty * $harga;
-    $idPelanggan = mysqli_real_escape_string($koneksi, $data['pelanggan']);
+    $nojual       = mysqli_real_escape_string($koneksi, $data['nojual']);
+    $idSatuan     = mysqli_real_escape_string($koneksi, $data['satuan']);
+    $qty          = (int)$data['qty'];
+    $harga        = (int)$data['harga'];
+    $jmlHarga     = $qty * $harga;
+    $idPelanggan  = mysqli_real_escape_string($koneksi, $data['pelanggan']);
+ 
+    if ($idSatuan == '' || $qty <= 0) {
+        echo "<script>alert('Data tidak lengkap atau qty tidak valid.');</script>";
+        return false;
+    }
 
-    if ($idSatuan == '' || $qty <= 0) return false;
+    // ✅ Cek stok barang di tabel satuan
+    $stokQuery = mysqli_query($koneksi, "SELECT stock FROM tbl_satuan WHERE id_satuan='$idSatuan'");
+    $stokData  = mysqli_fetch_assoc($stokQuery);
+    $stok      = (int)$stokData['stock'];
 
-    // Pastikan header ada
+    if ($qty > $stok) {
+        echo "<script>alert('Stok barang tidak cukup. Stok tersedia: $stok');</script>";
+        return false;
+    }
+
+    // ✅ Pastikan header penjualan ada
     $cekHead = mysqli_query($koneksi, "SELECT no_jual FROM tbl_jual_head WHERE no_jual='$nojual'");
     if (mysqli_num_rows($cekHead) == 0) {
         mysqli_query($koneksi, "INSERT INTO tbl_jual_head (no_jual, tgl_jual, id_pelanggan, total, created_at) 
                                 VALUES ('$nojual', CURDATE(), '$idPelanggan', 0, NOW())");
     }
 
-    // Cek detail
-    $cek = mysqli_query($koneksi, "SELECT * FROM tbl_jual_detail 
-                                   WHERE no_jual='$nojual' AND id_satuan='$idSatuan'");
-    if (mysqli_num_rows($cek) > 0) {
-        // Tambah qty dan subtotal
-        mysqli_query($koneksi, "UPDATE tbl_jual_detail 
-                                SET qty=qty+$qty, subtotal=subtotal+$jmlHarga 
-                                WHERE no_jual='$nojual' AND id_satuan='$idSatuan'");
-    } else {
-        $sql = "INSERT INTO tbl_jual_detail (no_jual, id_satuan, qty, harga, subtotal) 
-                VALUES ('$nojual', '$idSatuan', $qty, $harga, $jmlHarga)";
-        if (!mysqli_query($koneksi, $sql)) {
-            die('Error insert detail: ' . mysqli_error($koneksi));
-        }
+    // ✅ Cek apakah barang sudah pernah diinput untuk penjualan yang sama
+    $cekBrg = mysqli_query($koneksi, "SELECT * FROM tbl_jual_detail 
+                                      WHERE no_jual='$nojual' AND id_satuan='$idSatuan'");
+    if (mysqli_num_rows($cekBrg) > 0) {
+        echo "<script>alert('Barang sudah ada. Hapus dulu jika ingin ubah qty.');</script>";
+        return false;
     }
 
-    // Kurangi stok di tbl_satuan
+    // ✅ Jika belum ada, lakukan insert baru
+    $sql = "INSERT INTO tbl_jual_detail (no_jual, id_satuan, qty, harga, subtotal) 
+            VALUES ('$nojual', '$idSatuan', $qty, $harga, $jmlHarga)";
+    if (!mysqli_query($koneksi, $sql)) {
+        die('Error insert detail: ' . mysqli_error($koneksi));
+    }
+
+    // ✅ Kurangi stok di tabel satuan
     mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock-$qty WHERE id_satuan='$idSatuan'");
 
     return true;
 }
+
 
 /**
  * Simpan total transaksi penjualan
@@ -203,5 +216,7 @@ function updateJual($data) {
 
     return mysqli_query($koneksi, $sql);
 }
+
+
 
 ?>

@@ -37,24 +37,76 @@ if (isset($_POST['addbrg'])) {
     $qty = (int) $_POST['qty'];
     $harga = (int) $_POST['harga'];
     $subtotal = $qty * $harga;
-
-    $_SESSION['cart'][] = [
-        'id_satuan' => $idSatuan,
-        'qty' => $qty,
-        'harga' => $harga,
-        'subtotal' => $subtotal
-    ];
-
     $tgl = $_POST['tglNota'];
     $pelanggan = $_POST['pelanggan'];
+
+    // 🔍 Ambil data stok barang dari database
+    $sqlStok = mysqli_query($koneksi, "SELECT stock FROM tbl_satuan WHERE id_satuan = '$idSatuan'");
+    $dataStok = mysqli_fetch_assoc($sqlStok);
+    $stok = isset($dataStok['stock']) ? (int)$dataStok['stock'] : 0;
+
+    // 🚫 Validasi stok kosong
+    if ($stok <= 0) {
+        echo "<script>alert('❌ Stok barang ini sudah habis, tidak bisa ditambahkan!');</script>";
+        echo "<script>document.location='?tgl=$tgl&pelanggan=$pelanggan'</script>";
+        exit;
+    }
+
+    // 🚫 Validasi qty kosong / nol
+    if ($qty <= 0) {
+        echo "<script>alert('❌ Qty belum diisi atau tidak boleh 0!');</script>";
+        echo "<script>document.location='?tgl=$tgl&pelanggan=$pelanggan'</script>";
+        exit;
+    }
+
+    // 🚫 Validasi qty melebihi stok
+    if ($qty > $stok) {
+        echo "<script>alert('❌ Qty melebihi stok yang tersedia! (Stok saat ini: $stok)');</script>";
+        echo "<script>document.location='?tgl=$tgl&pelanggan=$pelanggan'</script>";
+        exit;
+    }
+
+    // 🔍 Cek apakah barang sudah ada di keranjang
+    $sudahAda = false;
+    foreach ($_SESSION['cart'] as $item) {
+        if ($item['id_satuan'] == $idSatuan) {
+            $sudahAda = true;
+            break;
+        }
+    }
+
+    // 🚫 Barang duplikat
+    if ($sudahAda) {
+        echo "<script>alert('⚠️ Barang sudah ada di keranjang. Hapus dulu jika ingin ubah qty.');</script>";
+    } 
+    // ✅ Barang valid, tambah ke keranjang
+    else {
+        $_SESSION['cart'][] = [
+            'id_satuan' => $idSatuan,
+            'qty' => $qty,
+            'harga' => $harga,
+            'subtotal' => $subtotal
+        ];
+    }
+
+    // 🔄 Reload halaman dengan parameter tanggal & pelanggan
     echo "<script>document.location='?tgl=$tgl&pelanggan=$pelanggan'</script>";
 }
+
+
 
 // Simpan transaksi penjualan
 if (isset($_POST['simpan'])) {
     $nojual = $_POST['nojual'];
     $tgl = $_POST['tglNota'];
-    $pelanggan = $_POST['pelanggan'];
+    $id_pelanggan = $_POST['pelanggan'];
+
+    // Ambil nama pelanggan berdasarkan id
+    $pelangganQ = mysqli_query($koneksi, "SELECT nama FROM tbl_pelanggan WHERE id_pelanggan='$id_pelanggan'");
+    $pelangganData = mysqli_fetch_assoc($pelangganQ);
+    $pelanggan = $pelangganData ? $pelangganData['nama'] : 'Pelanggan Umum';
+
+    // Hitung total dari session cart
     $total = 0;
     if (!empty($_SESSION['cart'])) {
         foreach ($_SESSION['cart'] as $item) {
@@ -62,42 +114,78 @@ if (isset($_POST['simpan'])) {
         }
     }
 
-    $hutang = $_POST['hutang'] ?? 0;
-    $jml_bayar = $_POST['jml_bayar'] ?? 0;
-    $kembalian = $_POST['kembalian'] ?? 0;
+    // Ambil nilai tambahan dari form
+    $hutang = isset($_POST['hutang']) ? (int)$_POST['hutang'] : 0;
+    $jml_bayar = isset($_POST['jml_bayar']) ? (int)$_POST['jml_bayar'] : 0;
+    $kembalian = isset($_POST['kembalian']) ? (int)$_POST['kembalian'] : 0;
 
-    // Simpan ke tabel penjualan head
-    mysqli_query($koneksi, "INSERT INTO tbl_jual_head (no_jual, tgl_jual, pelanggan, total, hutang, jml_bayar, kembalian)
-                            VALUES ('$nojual', '$tgl', '$pelanggan', '$total', '$hutang', '$jml_bayar', '$kembalian')");
+    // Tambahkan hutang ke total
+    $total += $hutang;
 
-    // Simpan ke tabel detail penjualan
+    // 🧩 Cek jika nomor jual sudah ada (hindari duplikasi)
+    $cekNoJual = mysqli_query($koneksi, "SELECT no_jual FROM tbl_jual_head WHERE no_jual='$nojual'");
+    if (mysqli_num_rows($cekNoJual) > 0) {
+        echo "<script>alert('Nomor jual sudah digunakan. Silakan gunakan nomor lain.');</script>";
+        exit;
+    }
+
+    // 🧾 Simpan ke tabel jual head
+    $insertHead = mysqli_query($koneksi, "INSERT INTO tbl_jual_head 
+        (no_jual, tgl_jual, pelanggan, total, hutang, jml_bayar, kembalian)
+        VALUES ('$nojual', '$tgl', '$pelanggan', '$total', '$hutang', '$jml_bayar', '$kembalian')");
+
+    if (!$insertHead) {
+        die('Gagal menyimpan data penjualan head: ' . mysqli_error($koneksi));
+    }
+
+    // 💾 Simpan ke tabel detail penjualan
     foreach ($_SESSION['cart'] as $item) {
         $idSatuan = $item['id_satuan'];
-        $qty = $item['qty'];
-        $harga = $item['harga'];
-        $subtotal = $item['subtotal'];
+        $qty = (int)$item['qty'];
+        $harga = (int)$item['harga'];
+        $subtotal = (int)$item['subtotal'];
 
-        // Ambil data barang
+        // Ambil data barang terkait
         $qBarang = mysqli_query($koneksi, "SELECT b.id_barang, b.nama_barang, b.harga_beli 
                                            FROM tbl_satuan s
                                            JOIN tbl_barang b ON s.id_barang = b.id_barang
                                            WHERE s.id_satuan = '$idSatuan'");
         $barang = mysqli_fetch_assoc($qBarang);
 
+        if (!$barang) continue; // skip jika data tidak ditemukan
+
         $kodeBrg = $barang['id_barang'];
         $namaBrg = $barang['nama_barang'];
         $hargaBeli = $barang['harga_beli'];
 
-        mysqli_query($koneksi, "INSERT INTO tbl_jual_detail (no_jual, tgl_jual, kode_brg, nama_brg, qty, harga_beli, jml_harga)
-                                VALUES ('$nojual', '$tgl', '$kodeBrg', '$namaBrg', '$qty', '$hargaBeli', '$subtotal')");
+        // Insert ke detail jual
+        $insertDetail = mysqli_query($koneksi, "INSERT INTO tbl_jual_detail 
+            (no_jual, tgl_jual, kode_brg, nama_brg, qty, harga_beli, jml_harga)
+            VALUES ('$nojual', '$tgl', '$kodeBrg', '$namaBrg', $qty, $hargaBeli, $subtotal)");
+
+        if (!$insertDetail) {
+            echo "<script>alert('Gagal menyimpan detail penjualan untuk barang $namaBrg');</script>";
+            continue;
+        }
 
         // Kurangi stok
         mysqli_query($koneksi, "UPDATE tbl_satuan SET stock = stock - $qty WHERE id_satuan='$idSatuan'");
     }
 
+    // Hapus cart setelah tersimpan
     unset($_SESSION['cart']);
-    echo "<script>alert('Data penjualan berhasil disimpan'); document.location='index.php';</script>";
+
+    // ✅ Tampilkan pesan sukses dan buka struk
+    echo "<script>
+        alert('Data penjualan berhasil disimpan!');
+        let win = window.open('../report/r-struk.php?nojual=$nojual', 'Struk Penjualan', 'width=260,height=400,left=10,top=10');
+        if (win) {
+            win.focus();
+        }
+        window.location='index.php';
+    </script>";
 }
+
 
 $noJual = generateNo();
 
@@ -185,14 +273,15 @@ if (!empty($_SESSION['cart'])) {
                     <div class="col-lg-6">
                         <div class="card card-outline card-warning p-3">
                             <div class="form-group mb-3 text-center">
-                                <input type="number" class="form-control text-right font-weight-bold" name="total"
+                                <input type="text" class="form-control text-right font-weight-bold" name="total"
                                     id="total" style="font-size: 30pt; height: 70px;" placeholder="0"
-                                    value="<?= number_format((float) $total, 0, ',', '.') ?>" readonly>
+                                    value="<?= number_format((float) ($total + ((int)($_POST['hutang'] ?? 0))), 0, ',', '.') ?>"
+ readonly>
                             </div>
                             <div class="row">
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <input type="number" name="hutang" id="hutang"
+                                        <input type="number" name="hutang" id="hutang" oninput="hitungTotal()"
                                             class="form-control form-control-sm" placeholder="Masukkan jumlah hutang">
                                     </div>
                                 </div>
@@ -267,8 +356,8 @@ if (!empty($_SESSION['cart'])) {
                             </div>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-sm btn-info btn-block" name="addbrg" onclick="updateTotalKeseluruhan()"><i
-                            class="fas fa-cart-plus fa-sm"></i> Tambah Barang</button>
+                    <button type="submit" class="btn btn-sm btn-info btn-block" name="addbrg"
+                        onclick="updateTotalKeseluruhan(); hitungSubTotal();"><i class="fas fa-cart-plus fa-sm"></i> Tambah Barang</button>
                 </div>
                 <div class="card card-outline card-success table-responsive px-2">
                     <table class="table-sm table-hover text-mowrap">
@@ -333,7 +422,14 @@ if (!empty($_SESSION['cart'])) {
         });
     });
 
-    function hitungTotal() {
+    satuan.addEventListener('change', function () {
+        let selected = this.options[this.selectedIndex];
+        harga.value = selected.getAttribute('data-harga') || '';
+        stok.value = selected.getAttribute('data-stok') || '';
+        hitungTotal();
+    });
+
+    function hitungSubTotal() {
         let q = parseFloat(qty.value) || 0;
         let h = parseFloat(harga.value) || 0;
         jmlHarga.value = q * h;
@@ -363,13 +459,6 @@ if (!empty($_SESSION['cart'])) {
         });
     });
 
-    satuan.addEventListener('change', function () {
-        let selected = this.options[this.selectedIndex];
-        harga.value = selected.getAttribute('data-harga') || '';
-        stok.value = selected.getAttribute('data-stok') || '';
-        hitungTotal();
-    });
-
     qty.addEventListener('input', hitungTotal);
     harga.addEventListener('input', hitungTotal);
 
@@ -381,6 +470,58 @@ if (!empty($_SESSION['cart'])) {
         });
         document.getElementById('total').value = total.toLocaleString('id-ID');
     }
+
+    function hitungTotal() {
+    let totalBarang = 0;
+    document.querySelectorAll('tbody tr').forEach(row => {
+        let jml = row.children[4]?.innerText?.replace(/\./g, '') || 0;
+        totalBarang += parseInt(jml);
+    });
+
+    let hutang = parseInt(document.getElementById('hutang').value) || 0;
+    let totalAkhir = totalBarang + hutang;
+
+    document.getElementById('total').value = totalAkhir.toLocaleString('id-ID');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Saat tombol hapus diklik, pastikan total diperbarui setelah reload
+    const deleteLinks = document.querySelectorAll('a[href*="hapus="]');
+    deleteLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            localStorage.setItem('hutang', document.getElementById('hutang').value);
+        });
+    });
+
+    // Setelah reload, kembalikan nilai hutang ke input
+    const hutangValue = localStorage.getItem('hutang');
+    if (hutangValue) {
+        document.getElementById('hutang').value = hutangValue;
+        localStorage.removeItem('hutang');
+        hitungTotal();
+    }
+});
+
+function hitungKembalian() {
+    let totalText = document.getElementById('total').value.replace(/\./g, '');
+    let total = parseFloat(totalText) || 0;
+    let jmlBayar = parseFloat(document.getElementById('jml_bayar').value) || 0;
+
+    let hasil = jmlBayar - total;
+    let kembalianField = document.getElementById('kembalian');
+
+    // Jika hasil negatif → berarti masih hutang
+    if (hasil < 0) {
+        kembalianField.value = `Hutang ${Math.abs(hasil)}`;
+        kembalianField.style.color = 'red';
+    } else {
+        kembalianField.value = hasil;
+        kembalianField.style.color = 'green';
+    }
+}
+
+// Jalankan fungsi setiap kali jumlah bayar berubah
+document.getElementById('jml_bayar').addEventListener('input', hitungKembalian);
 
 </script>
 
