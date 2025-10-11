@@ -1,16 +1,9 @@
 <?php
-session_start();
-if (!isset($_SESSION["ssLoginPOS"])) {
-    header("location: ../auth/login.php");
-    exit();
-}
 
-require "../config/config.php";
-require "../config/functions.php";
+$nota = $_GET['nojual'];
+$dataJual = getData("SELECT * FROM tbl_jual_head WHERE no_jual = '$nota'")[0];
+$itemJual = getData("SELECT * FROM tbl_jual_detail WHERE no_jual = '$nota'");
 
-$nota = $_GET['nota'];
-$dataJual = getData("SELECT * FROM tbl_jual_head WHERE no_jual = '$nota'"[0]);
-$itemJual = getData("SELECT * FROM tbl_jual_detail WHERE no_jual = '$nota'"[0]);
 
 ?>
 
