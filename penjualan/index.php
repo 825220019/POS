@@ -40,10 +40,32 @@ if (isset($_POST['addbrg'])) {
     $tgl = $_POST['tglNota'];
     $pelanggan = $_POST['pelanggan'];
 
+
+    $idSatuan = $_POST['satuan'] ?? null;
+
+    if ($idSatuan) {
+        $qStok = mysqli_query($koneksi, "
+        SELECT b.stok, s.jumlah_isi AS faktor_konversi
+        FROM tbl_satuan s
+        JOIN tbl_barang b ON s.id_barang = b.id_barang
+        WHERE s.id_satuan = '$idSatuan'
+    ");
+        $dataStok = mysqli_fetch_assoc($qStok);
+    }
+
     // 🔍 Ambil data stok barang dari database
-    $sqlStok = mysqli_query($koneksi, "SELECT stock FROM tbl_satuan WHERE id_satuan = '$idSatuan'");
-    $dataStok = mysqli_fetch_assoc($sqlStok);
-    $stok = isset($dataStok['stock']) ? (int) $dataStok['stock'] : 0;
+    // Ambil data stok barang dari database
+    $stokBarang = (int) $dataStok['stok'];
+    $faktor_konversi = (int) ($dataStok['faktor_konversi'] ?? 1);
+
+    // 🔹 Cek faktor_konversi supaya tidak 0
+    if ($faktor_konversi <= 0) {
+        $faktor_konversi = 1; // default aman
+    }
+
+    // stok dalam satuan terpilih
+    $stok = floor($stokBarang / $faktor_konversi);
+
 
     // 🚫 Validasi stok kosong
     if ($stok <= 0) {
@@ -145,34 +167,30 @@ if (isset($_POST['simpan'])) {
         $harga = (int) $item['harga'];
         $subtotal = (int) $item['subtotal'];
 
-        // Ambil data barang terkait
-        $qBarang = mysqli_query($koneksi, "SELECT b.id_barang, b.nama_barang, b.harga_jual 
-                                           FROM tbl_satuan s
-                                           JOIN tbl_barang b ON s.id_barang = b.id_barang
-                                           WHERE s.id_satuan = '$idSatuan'");
+        // Ambil data barang dan faktor konversi
+        $qBarang = mysqli_query($koneksi, "
+        SELECT b.id_barang, s.jumlah_isi AS faktor_konversi
+        FROM tbl_satuan s
+        JOIN tbl_barang b ON s.id_barang = b.id_barang
+        WHERE s.id_satuan = '$idSatuan'
+    ");
         $barang = mysqli_fetch_assoc($qBarang);
-
         if (!$barang)
-            continue; // skip jika data tidak ditemukan
+            continue;
 
-        $kodeBrg = $barang['id_barang'];
-        $namaBrg = $barang['nama_barang'];
-        $hargaJual = $barang['harga_jual'];
+        $idBarang = $barang['id_barang'];
+        $faktor = (int) ($barang['faktor_konversi'] ?? 1);
+        $qtyDasar = $qty * $faktor;
+
+        // Update stok di tbl_barang
+        mysqli_query($koneksi, "UPDATE tbl_barang SET stok = stok - $qtyDasar WHERE id_barang = '$idBarang'");
 
         // Insert ke detail jual
         $insertDetail = mysqli_query($koneksi, "INSERT INTO tbl_jual_detail 
-            (no_jual, tgl_jual, kode_brg, nama_brg, qty, harga_jual, jml_harga)
-            VALUES ('$nojual', '$tgl', '$kodeBrg', '$namaBrg', $qty, $hargaJual, $subtotal)");
-
-        if (!$insertDetail) {
-            echo "<script>alert('Gagal menyimpan detail penjualan untuk barang $namaBrg');</script>";
-            continue;
-        }
-
-        // Kurangi stok
-        mysqli_query($koneksi, "UPDATE tbl_satuan SET stock = stock - $qty WHERE id_satuan='$idSatuan'");
-
+        (no_jual, tgl_jual, kode_brg, nama_brg, qty, harga_jual, jml_harga)
+        VALUES ('$nojual', '$tgl', '$idBarang', '', $qty, $harga, $subtotal)");
     }
+
 
     // Hapus cart setelah tersimpan
     unset($_SESSION['cart']);
@@ -190,14 +208,14 @@ if (isset($_POST['simpan'])) {
 }
 
 
-    $noJual = generateNo();
+$noJual = generateNo();
 
-    $total = 0;
-    if (!empty($_SESSION['cart'])) {
-        foreach ($_SESSION['cart'] as $item) {
-            $total += $item['subtotal'];
-        }
+$total = 0;
+if (!empty($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $item) {
+        $total += $item['subtotal'];
     }
+}
 ?>
 
 <!-- Content Wrapper. Contains page content -->
@@ -425,11 +443,11 @@ if (isset($_POST['simpan'])) {
     });
 
     satuan.addEventListener('change', function () {
-        let selected = this.options[this.selectedIndex];
-        harga.value = selected.getAttribute('data-harga') || '';
-        stok.value = selected.getAttribute('data-stok') || '';
-        hitungTotal();
-    });
+    let selected = this.options[this.selectedIndex];
+    harga.value = selected.getAttribute('data-harga') || 0;
+    stok.value = selected.getAttribute('data-stok') || 0;
+    hitungSubTotal(); // otomatis hitung ulang
+});
 
     function hitungSubTotal() {
         let q = parseFloat(qty.value) || 0;
@@ -461,8 +479,8 @@ if (isset($_POST['simpan'])) {
         });
     });
 
-    qty.addEventListener('input', hitungTotal);
-    harga.addEventListener('input', hitungTotal);
+    qty.addEventListener('input', hitungSubTotal);
+    harga.addEventListener('input', hitungSubTotal);
 
     function updateTotalKeseluruhan() {
         let total = 0;

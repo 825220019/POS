@@ -67,13 +67,13 @@ function insert($data)
 {
     global $koneksi;
 
-    $nojual       = mysqli_real_escape_string($koneksi, $data['nojual']);
-    $idSatuan     = mysqli_real_escape_string($koneksi, $data['satuan']);
-    $qty          = (int)$data['qty'];
-    $harga        = (int)$data['harga'];
-    $jmlHarga     = $qty * $harga;
-    $idPelanggan  = mysqli_real_escape_string($koneksi, $data['pelanggan']);
- 
+    $nojual = mysqli_real_escape_string($koneksi, $data['nojual']);
+    $idSatuan = mysqli_real_escape_string($koneksi, $data['satuan']);
+    $qty = (int) $data['qty'];
+    $harga = (int) $data['harga'];
+    $jmlHarga = $qty * $harga;
+    $idPelanggan = mysqli_real_escape_string($koneksi, $data['pelanggan']);
+
     if ($idSatuan == '' || $qty <= 0) {
         echo "<script>alert('Data tidak lengkap atau qty tidak valid.');</script>";
         return false;
@@ -81,8 +81,8 @@ function insert($data)
 
     // ✅ Cek stok barang di tabel satuan
     $stokQuery = mysqli_query($koneksi, "SELECT stock FROM tbl_satuan WHERE id_satuan='$idSatuan'");
-    $stokData  = mysqli_fetch_assoc($stokQuery);
-    $stok      = (int)$stokData['stock'];
+    $stokData = mysqli_fetch_assoc($stokQuery);
+    $stok = (int) $stokData['stock'];
 
     if ($qty > $stok) {
         echo "<script>alert('Stok barang tidak cukup. Stok tersedia: $stok');</script>";
@@ -111,8 +111,21 @@ function insert($data)
         die('Error insert detail: ' . mysqli_error($koneksi));
     }
 
-    // ✅ Kurangi stok di tabel satuan
-    mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock-$qty WHERE id_satuan='$idSatuan'");
+    $qSatuan = mysqli_query($koneksi, "SELECT b.id_barang, s.jumlah_isi, k.faktor
+                                   FROM tbl_satuan s
+                                   JOIN tbl_barang b ON s.id_barang = b.id_barang
+                                   LEFT JOIN tbl_konversi_satuan k 
+                                   ON s.id_barang=k.id_barang AND s.satuan=k.satuan_turunan
+                                   WHERE s.id_satuan='$idSatuan'");
+    $dataSatuan = mysqli_fetch_assoc($qSatuan);
+
+    $idBarang = $dataSatuan['id_barang'];
+    $faktor = $dataSatuan['faktor'] ?? $dataSatuan['jumlah_isi']; // pakai faktor jika ada
+    $qtyDasar = $qty * $faktor;
+
+    mysqli_query($koneksi, "UPDATE tbl_barang SET stok = stok - $qtyDasar WHERE id_barang='$idBarang'");
+
+
 
     return true;
 }
@@ -125,10 +138,10 @@ function simpanPenjualan($data)
 {
     global $koneksi;
 
-    $nojual    = mysqli_real_escape_string($koneksi, $data['nojual']);
-    $tgl       = mysqli_real_escape_string($koneksi, $data['tglNota']);
+    $nojual = mysqli_real_escape_string($koneksi, $data['nojual']);
+    $tgl = mysqli_real_escape_string($koneksi, $data['tglNota']);
     $pelanggan = mysqli_real_escape_string($koneksi, $data['pelanggan']);
-    $total     = mysqli_real_escape_string($koneksi, $data['total']);
+    $total = mysqli_real_escape_string($koneksi, $data['total']);
 
     // Update total di header
     $sqlUpdate = "UPDATE tbl_jual_head 
@@ -148,24 +161,45 @@ function delete($idSatuan, $noJual, $qty)
 {
     global $koneksi;
 
-    // Hapus detail
+    // Ambil info barang dan jumlah_isi / faktor konversi
+    $q = mysqli_query($koneksi, "
+        SELECT b.id_barang, b.stok, s.jumlah_isi, k.faktor
+        FROM tbl_satuan s
+        JOIN tbl_barang b ON s.id_barang = b.id_barang
+        LEFT JOIN tbl_konversi_satuan k 
+            ON s.id_barang = k.id_barang AND s.satuan = k.satuan_turunan
+        WHERE s.id_satuan = '$idSatuan'
+    ");
+    $data = mysqli_fetch_assoc($q);
+
+    if (!$data) {
+        return 0; // barang tidak ditemukan
+    }
+
+    $idBarang = $data['id_barang'];
+    $faktor = $data['faktor'] ?? $data['jumlah_isi']; // pakai faktor konversi jika ada
+    $qtyDasar = $qty * $faktor;
+
+    // Hapus detail penjualan
     $sqlDel = "DELETE FROM tbl_jual_detail WHERE id_satuan='$idSatuan' AND no_jual='$noJual'";
     mysqli_query($koneksi, $sqlDel);
 
-    // Kembalikan stok
-    mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock+$qty WHERE id_satuan='$idSatuan'");
+    // Kembalikan stok di tbl_barang
+    mysqli_query($koneksi, "UPDATE tbl_barang SET stok = stok + $qtyDasar WHERE id_barang = '$idBarang'");
 
     return mysqli_affected_rows($koneksi);
 }
 
-function insertJual($data) {
+
+function insertJual($data)
+{
     global $koneksi;
 
-    $no_jual    = mysqli_real_escape_string($koneksi, $data['no_jual']);
-    $tgl_jual   = mysqli_real_escape_string($koneksi, $data['tgl_jual']);
-    $pelanggan  = mysqli_real_escape_string($koneksi, $data['pelanggan']);
-    $total      = floatval($data['total']);
-    $jml_bayar  = floatval($data['jml_bayar']);
+    $no_jual = mysqli_real_escape_string($koneksi, $data['no_jual']);
+    $tgl_jual = mysqli_real_escape_string($koneksi, $data['tgl_jual']);
+    $pelanggan = mysqli_real_escape_string($koneksi, $data['pelanggan']);
+    $total = floatval($data['total']);
+    $jml_bayar = floatval($data['jml_bayar']);
 
     // Hitung hutang dan kembalian
     if ($jml_bayar == 0) {
@@ -189,12 +223,13 @@ function insertJual($data) {
 }
 
 
-function updateJual($data) {
+function updateJual($data)
+{
     global $koneksi;
 
-    $no_jual    = mysqli_real_escape_string($koneksi, $data['no_jual']);
-    $total      = floatval($data['total']);
-    $jml_bayar  = floatval($data['jml_bayar']);
+    $no_jual = mysqli_real_escape_string($koneksi, $data['no_jual']);
+    $total = floatval($data['total']);
+    $jml_bayar = floatval($data['jml_bayar']);
 
     if ($jml_bayar == 0) {
         $hutang = $total;

@@ -7,7 +7,6 @@ if (!isset($_SESSION["ssLoginPOS"])) {
     exit();
 }
 
-
 require "../config/config.php";
 require "../config/functions.php";
 require "../module/mode-beli.php";
@@ -43,16 +42,23 @@ if (isset($_GET['id_barang'])) {
     $satuanList = [];
     if ($kode) {
         $satuanList = getData("
-            SELECT s.satuan, s.harga_jual, s.stock 
-            FROM tbl_satuan s
-            JOIN tbl_varian v ON s.id_varian = v.id_varian
-            WHERE v.id_barang = '$kode'
-        ");
+    SELECT s.satuan, s.harga_jual
+    FROM tbl_satuan s
+    JOIN tbl_varian v ON s.id_varian = v.id_varian
+    WHERE v.id_barang = '$kode'
+");
     }
 }
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
+}
+
+$total = 0;
+if (!empty($_SESSION['cart'])) {
+    foreach ($_SESSION['cart'] as $item) {
+        $total += $item['subtotal'];
+    }
 }
 
 if (isset($_POST['addbrg'])) {
@@ -76,54 +82,39 @@ if (isset($_POST['addbrg'])) {
 
 }
 
-
 if (isset($_POST['simpan'])) {
     $nobeli = $_POST['nobeli'];
     $tgl = $_POST['tglNota'];
     $supplier = $_POST['supplier'];
-    $total = 0;
-    if (!empty($_SESSION['cart'])) {
-        foreach ($_SESSION['cart'] as $item) {
-            $total += $item['subtotal'];
-        }
-    }
 
+    // Simpan head dulu
+    mysqli_query($koneksi, "
+        INSERT INTO tbl_beli_head (no_beli, tgl_beli, id_supplier, total, created_at)
+        VALUES ('$nobeli', '$tgl', '$supplier', 0, NOW())
+    ");
 
-    // insert ke tbl_beli_head
-    mysqli_query($koneksi, "INSERT INTO tbl_beli_head (no_beli, tgl_beli, id_supplier, total, created_at) 
-                                VALUES ('$nobeli', '$tgl', '$supplier', '$total', NOW())");
-
-    // insert detail
     foreach ($_SESSION['cart'] as $item) {
-        $idSatuan = $item['id_satuan'];
-        $qty = $item['qty'];
-        $harga = $item['harga'];
-        $subtotal = $item['subtotal'];
-
-        mysqli_query($koneksi, "INSERT INTO tbl_beli_detail (no_beli, id_satuan, qty, harga, subtotal) 
-                                    VALUES ('$nobeli','$idSatuan','$qty','$harga','$subtotal')");
-
-        // update stok
-        mysqli_query($koneksi, "UPDATE tbl_satuan SET stock=stock+$qty WHERE id_satuan='$idSatuan'");
-
-        $qBarang = mysqli_query($koneksi, "SELECT id_barang FROM tbl_satuan WHERE id_satuan='$idSatuan'");
-        $barangRow = mysqli_fetch_assoc($qBarang);
-        if ($barangRow) {
-            $idBarang = $barangRow['id_barang'];
-            mysqli_query($koneksi, "UPDATE tbl_barang SET harga_beli='$harga' WHERE id_barang='$idBarang'");
-        }
-
+        $itemData = [
+            'nobeli' => $nobeli,
+            'tglNota' => $tgl,
+            'supplier' => $supplier,
+            'satuan' => $item['id_satuan'],
+            'qty' => $item['qty'],
+            'harga' => $item['harga']
+        ];
+        insertPembelian($itemData);
     }
 
-    // bersihkan cart
+    // Hitung total dan update head
+    $total = simpanTotalPembelian($nobeli);
+
     unset($_SESSION['cart']);
 
     echo "<script>
-                alert('Data pembelian berhasil disimpan');
-                document.location='index.php';
-            </script>";
+        alert('Data pembelian berhasil disimpan!');
+        document.location='index.php';
+    </script>";
 }
-
 
 
 $noBeli = generateNo()
@@ -229,7 +220,7 @@ $noBeli = generateNo()
                                 </datalist>
                             </div>
                         </div>
-                        <div class="col-lg-1">
+                        <div class="col-lg-2">
                             <div class="form-group">
                                 <label for="satuan">Satuan</label>
                                 <select name="satuan" id="satuan" class="form-control form-control-sm">
@@ -237,18 +228,11 @@ $noBeli = generateNo()
                                 </select>
                             </div>
                         </div>
-                        <div class="col-lg-1">
-                            <div class="form-group">
-                                <label for="stok">Stok</label>
-                                <input type="number" name="stok" id="stok" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['stock'] ?? '' ?>" readonly>
-                            </div>
-                        </div>
                         <div class="col-lg-2">
                             <div class="form-group">
                                 <label for="harga">Harga</label>
                                 <input type="number" name="harga" id="harga" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['harga_jual'] ?? '' ?>">
+                                    value="<?= $selectBrg['harga_beli'] ?? '' ?>">
                             </div>
                         </div>
                         <div class="col-lg-2">
@@ -262,7 +246,7 @@ $noBeli = generateNo()
                             <div class="form-group">
                                 <label for="jmlHarga">Jumlah Harga</label>
                                 <input type="number" name="jmlHarga" id="jmlHarga" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['harga_jual'] ?? '' ?>" readonly>
+                                    value="<?= $selectBrg['harga_beli'] ?? '' ?>" readonly>
                             </div>
                         </div>
                     </div>
@@ -324,7 +308,6 @@ $noBeli = generateNo()
     let namaBrg = document.getElementById('namaBrg');
     let kodeBrg = document.querySelector('input[name="kodeBrg"]');
     let harga = document.getElementById('harga');
-    let stok = document.getElementById('stok');
     let qty = document.getElementById('qty');
     let jmlHarga = document.getElementById('jmlHarga');
     let satuan = document.getElementById('satuan'); // dropdown satuan
@@ -336,58 +319,52 @@ $noBeli = generateNo()
         jmlHarga.value = q * h;
     }
 
-    namaBrg.addEventListener('input', function () {
-        let val = this.value;
-        let opts = document.querySelectorAll('#listBarang option');
+    namaBrg.addEventListener('change', function () {
+        let val = this.value.trim();
+        let selectedOption = Array.from(document.querySelectorAll('#listBarang option'))
+            .find(option => option.value.trim().toLowerCase() === val.toLowerCase());
 
-        let found = false;
-        opts.forEach(option => {
-            if (option.value === val) {
-                let idBarang = option.getAttribute('data-id');
-                kodeBrg.value = idBarang;
+        if (selectedOption) {
+            let idBarang = selectedOption.getAttribute('data-id');
+            kodeBrg.value = idBarang;
+            console.log("ID barang:", idBarang);
 
-                console.log("ID barang:", idBarang);
+            fetch('get_satuan.php?id_barang=' + idBarang)
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Response dari get_satuan.php:", data);
+                    satuan.innerHTML = '<option value="">-- Pilih Satuan --</option>';
 
-                fetch('get_satuan.php?id_barang=' + idBarang)
-                    .then(res => res.json())
-                    .then(data => {
-                        console.log("Response dari get_satuan.php:", data);
+                    if (Array.isArray(data)) {
+                        data.forEach((item, index) => {
+                            let opt = document.createElement('option');
+                            opt.value = item.id_satuan;
+                            opt.text = item.satuan + (item.nama_varian ? " - " + item.nama_varian : "");
+                            opt.setAttribute('data-harga', item.harga_beli);
+                            opt.setAttribute('data-stok', 0);
+                            satuan.appendChild(opt);
 
-                        satuan.innerHTML = '<option value="">-- Pilih Satuan --</option>';
-
-                        if (Array.isArray(data)) {
-                            data.forEach(item => {
-                                let opt = document.createElement('option');
-                                opt.value = item.id_satuan;
-                                opt.text = item.satuan + (item.nama_varian ? " - " + item.nama_varian : "");
-                                opt.setAttribute('data-harga', item.harga_jual);
-                                opt.setAttribute('data-stok', item.stock);
-                                satuan.appendChild(opt);
-                            });
-                        } else if (data.data && Array.isArray(data.data)) {
-                            data.data.forEach(item => {
-                                let opt = document.createElement('option');
-                                opt.value = item.satuan;
-                                opt.text = item.satuan;
-                                opt.setAttribute('data-harga', item.harga_jual);
-                                opt.setAttribute('data-stok', item.stock);
-                                satuan.appendChild(opt);
-                            });
-                        }
-                    })
-                    .catch(err => console.error("Fetch error:", err));
-            }
-        });
-
-        if (!found) {
+                            // Pilih item pertama otomatis
+                            if (index === 0) {
+                                satuan.value = item.id_satuan;      // set dropdown
+                                harga.value = item.harga_beli;      // update harga
+                                hitungTotal();                      // hitung total
+                                qty.focus();                         // arahkan ke quantity
+                            }
+                        });
+                    }
+                })
+                .catch(err => console.error("Fetch error:", err));
+        } else {
             kodeBrg.value = "";
+            satuan.innerHTML = '<option value="">-- Pilih Satuan --</option>';
         }
     });
+
 
     satuan.addEventListener('change', function () {
         let selected = this.options[this.selectedIndex];
         harga.value = selected.getAttribute('data-harga') || '';
-        stok.value = selected.getAttribute('data-stok') || '';
         hitungTotal();
     });
 

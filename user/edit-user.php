@@ -2,8 +2,8 @@
 
 session_start();
 
-if (!isset($_SESSION["ssLoginPOS"])){
-    header("location: auth/login.php");
+if (!isset($_SESSION["ssLoginPOS"])) {
+    header("location: ../auth/login.php");
     exit();
 }
 
@@ -18,7 +18,7 @@ require "../template/navbar.php";
 require "../template/sidebar.php";
 
 $id = $_GET['id'];
-$sqlEdit = "SELECT * FROM tbl_user WHERE userid = $id";
+$sqlEdit = "SELECT * FROM tbl_user WHERE user_id = $id";
 $user = getData($sqlEdit)[0];
 $level = $user["level"];
 
@@ -59,39 +59,40 @@ if (isset($_POST['koreksi'])) {
         <div class="container-fluid">
             <div class="card">
                 <form action="" method="post" enctype="multipart/form-data">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-pen fa-sm" ></i> Edit User</h3>
-                    <button type="submit" name="koreksi" class="btn btn-primary btn-sm float-right"><i class="fas fa-save"></i> Edit</button>
-                    <button type="reset" name="reset" class="btn btn-danger btn-sm float-right mr-1"><i
-                            class="fas fa-times"></i> Reset</button>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <input type="hidden" name="id" value="<?= $user['userid']; ?>">
-                        <div class="col-lg-8 mb-3">
-                            <div class="form-group">
-                                <label for="username">Username</label>
-                                <input type="text" class="form-control" id="username" name="username"
-                                    placeholder="masukkan username" autofocus autocomplete="off" 
-                                    value="<?= $user['username']; ?>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="fullname">Fullname</label>
-                                <input type="text" class="form-control" id="fullname" name="fullname"
-                                    placeholder="masukkan nama lengkap" value="<?= $user['fullname']; ?>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="level">Level</label>
-                                <select name="level" id="level" class="form-control">
-                                    <option value="">-- Level User--</option>
-                                    <option value="1" <?=selectUser1($level)?>>Admin</option>
-                                    <option value="1" <?=selectUser2($level)?>>Kasir</option>
-                                </select>
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-pen fa-sm"></i> Edit User</h3>
+                        <button type="submit" name="koreksi" class="btn btn-primary btn-sm float-right"><i
+                                class="fas fa-save"></i> Edit</button>
+                        <button type="reset" name="reset" class="btn btn-danger btn-sm float-right mr-1"><i
+                                class="fas fa-times"></i> Reset</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <input type="hidden" name="id" value="<?= $user['user_id']; ?>">
+                            <div class="col-lg-8 mb-3">
+                                <div class="form-group">
+                                    <label for="username">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username"
+                                        placeholder="masukkan username" autofocus autocomplete="off"
+                                        value="<?= $user['username']; ?>" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fullname">Fullname</label>
+                                    <input type="text" class="form-control" id="fullname" name="fullname"
+                                        placeholder="masukkan nama lengkap" value="<?= $user['fullname']; ?>" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="level">Level</label>
+                                    <select name="level" id="level" class="form-control">
+                                        <option value="">-- Level User--</option>
+                                        <option value="admin" <?= $level == 'admin' ? 'selected' : ''; ?>>Admin</option>
+                                        <option value="kasir" <?= $level == 'kasir' ? 'selected' : ''; ?>>Kasir</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
+                        <div class="col-lg-4 mb-3"></div>
                     </div>
-                    <div class="col-lg-4 mb-3"></div>
-                </div>
                 </form>
             </div>
         </div>

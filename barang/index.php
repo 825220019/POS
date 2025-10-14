@@ -26,19 +26,23 @@ if (isset($_GET['msg'])) {
 $alert = '';
 //jalankan fungsi hapus barang
 if ($msg == 'deleted') {
-  $id = $_GET['id'];
-  delete($id);
-  $alert = "<script>
-    $(document).ready(function(){
-      $(document).Toasts('create', {
-        class: 'bg-success', 
-        title: 'Success',
-        icon: 'fas fa-check-circle',
-        body: 'Barang berhasil dihapus.'
-      })
-    });
-  </script>";
+    // jangan cast ke int kalau id_barang bertipe string seperti "BRG-001"
+    $id = isset($_GET['id']) ? $_GET['id'] : '';
+    if ($id !== '') {
+        delete($id);
+        $alert = "<script>
+        $(document).ready(function(){
+          $(document).Toasts('create', {
+            class: 'bg-success', 
+            title: 'Success',
+            icon: 'fas fa-check-circle',
+            body: 'Barang berhasil dihapus.'
+          })
+        });
+      </script>";
+    }
 }
+
 
 if ($msg == 'updated') {
   $alert = "<script>
@@ -134,6 +138,21 @@ if ($msg == 'updated') {
 
           </table>
   </section>
+
+  <script>
+document.querySelector("form").addEventListener("submit", function(e) {
+  const satuanInputs = document.querySelectorAll('input[name="satuan[]"]');
+  if (satuanInputs.length > 0) {
+    const lastSatuan = satuanInputs[satuanInputs.length - 1].value;
+    const satuanDasarInput = document.createElement("input");
+    satuanDasarInput.type = "hidden";
+    satuanDasarInput.name = "satuan_dasar";
+    satuanDasarInput.value = lastSatuan;
+    this.appendChild(satuanDasarInput);
+  }
+});
+</script>
+
 
 </div>
 <?php

@@ -22,7 +22,7 @@
           </a>
         </li>
         <?php
-        if (userLogin()['level'] != 2) {
+        if (userLogin()['level'] != 'kasir') {
           ?>
           <li class="nav-item <?= menuMaster() ?>">
             <a href="#" class="nav-link">
@@ -93,7 +93,7 @@
           </a>
         </li>
         <?php
-        if (userLogin()['level'] == 1) {
+        if (userLogin()['level'] == 'admin') {
           ?>
           <li class="nav-item <?= menuSetting() ?>">
             <a href="#" class="nav-link">

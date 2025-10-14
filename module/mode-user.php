@@ -1,9 +1,10 @@
 <?php
 
-if (userLogin()['level'] != 1) {
-    header("location" . $main_url ."error-page.php");
+if (userLogin()['level'] != 'admin') {
+    header("location: ".$main_url."error-page.php");
     exit();
 }
+
 function insert($data)
 {
     global $koneksi;
@@ -42,7 +43,7 @@ function delete($id)
 {
     global $koneksi;
 
-    $sqlDel = "DELETE FROM tbl_user WHERE userid = $id";
+    $sqlDel = "DELETE FROM tbl_user WHERE user_id = $id";
     mysqli_query($koneksi, $sqlDel);
 
     return mysqli_affected_rows($koneksi);
@@ -58,7 +59,7 @@ function update($data)
     $level = mysqli_real_escape_string($koneksi, $data['level']);
     
     //cek username sekarang
-    $queryUsername = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE userid = $iduser");
+    $queryUsername = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE user_id = $iduser");
     $dataUsername = mysqli_fetch_assoc($queryUsername);
     $curUsername = $dataUsername['username'];
 
@@ -83,20 +84,9 @@ function update($data)
     return mysqli_affected_rows($koneksi);
 }
 
-function selectUser1($level){
-    $result = null;
-    if ($level == 1) {
-        $result = "selected";
-}
-return $result;
+function selectUser($level, $value){
+    return ($level == $value) ? "selected" : "";
 }
 
-function selectUser2($level){
-    $result = null;
-    if ($level == 2) {
-        $result = "selected";
-}
-return $result;
-}
 
 ?>
