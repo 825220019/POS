@@ -19,8 +19,13 @@ if (!isset($_GET['nojual']) || empty($_GET['nojual'])) {
 
 $nota = mysqli_real_escape_string($koneksi, $_GET['nojual']);
 
-// ✅ Cek apakah data jual benar-benar ada
-$dataJualQuery = getData("SELECT * FROM tbl_jual_head WHERE no_jual = '$nota'");
+$dataJualQuery = getData("
+    SELECT j.*, p.nama AS nama_pelanggan 
+    FROM tbl_jual_head j
+    LEFT JOIN tbl_pelanggan p ON j.id_pelanggan = p.id_pelanggan
+    WHERE j.no_jual = '$nota'
+");
+
 if (empty($dataJualQuery)) {
     echo "<script>
         alert('Data penjualan tidak ditemukan!');
@@ -31,12 +36,13 @@ if (empty($dataJualQuery)) {
 
 $dataJual = $dataJualQuery[0];
 $itemJual = getData("
-    SELECT d.*, b.nama_barang 
+    SELECT d.*, b.nama_barang, v.nama_varian, s.satuan
     FROM tbl_jual_detail d
-    JOIN tbl_barang b ON d.kode_brg = b.id_barang
+    JOIN tbl_barang b ON d.id_barang = b.id_barang
+    LEFT JOIN tbl_satuan s ON d.id_satuan = s.id_satuan
+    LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
     WHERE d.no_jual = '$nota'
 ");
-
 
 $selisih = $dataJual['jml_bayar'] - $dataJual['total'];
 
@@ -74,7 +80,7 @@ if ($selisih >= 0) {
             <td><?= date('d-m-Y H:i:s') ?></td>
         </tr>
         <tr>
-            <td><?= $dataJual['pelanggan'] ?></td>
+            <td><?= !empty($dataJual['nama_pelanggan']) ? $dataJual['nama_pelanggan'] : 'Pelanggan Umum' ?></td>
         </tr>
     </table>
     <table style="border-bottom: dotted 2px; font-size: 14px; width:240px;">
@@ -82,10 +88,17 @@ if ($selisih >= 0) {
         foreach ($itemJual as $item) {
             ?>
             <tr>
-                <td colspan="6"><?= $item['nama_barang'] ?></td>
+                <td colspan="6">
+                    <?= $item['nama_barang'] ?>
+                    <?php if (!empty($item['nama_varian'])) { ?>
+                        - <?= $item['nama_varian'] ?>
+                    <?php } ?>
+                </td>
             </tr>
             <tr>
-                <td style="width: 10px; text-align:right"><?= $item['qty'] ?></td>
+                <td colspan="2" style="text-align:left">
+                    <?= $item['qty'] . ' ' . ($item['satuan'] ?? '') ?>
+                </td>
                 <td style="width: 70px; text-align:right"> x <?= number_format($item['harga_jual'], 0, ',', '.') ?></td>
                 <td style="width: 70px; text-align:right" colspan="2"> =
                     <?= number_format($item['jml_harga'], 0, ',', '.') ?>
@@ -104,14 +117,14 @@ if ($selisih >= 0) {
         <tr>
             <td colspan="3" style="width: 100px;"></td>
             <td style="width: 50px; text-align: right">Total</td>
-            <td style="width: 70px; text-align: right" colspan"2">
+            <td style="width: 70px; text-align: right" colspan="2">
                 <b><?= number_format($dataJual['total'], 0, ',', '.') ?></b>
             </td>
         </tr>
         <tr>
             <td colspan="3" style="width: 100px;"></td>
             <td style="width: 50px; text-align: right">Bayar</td>
-            <td style="width: 70px; text-align: right" colspan"2">
+            <td style="width: 70px; text-align: right" colspan="2">
                 <b><?= number_format($dataJual['jml_bayar'], 0, ',', '.') ?></b>
             </td>
         </tr>
@@ -120,7 +133,7 @@ if ($selisih >= 0) {
         <tr>
             <td colspan="3" style="width: 100px;"></td>
             <td style="width: 50px; text-align: right"><?= $label ?></td>
-            <td style="width: 70px; text-align: right" colspan"2">
+            <td style="width: 70px; text-align: right" colspan="2">
                 <b><?= number_format($nilai, 0, ',', '.') ?></b>
             </td>
         </tr>
@@ -135,6 +148,7 @@ if ($selisih >= 0) {
         setTimeout(function () {
             window.print();
         }, 1000);
+        setTimeout(() => { window.close(); }, 3000);
     </script>
 </body>
 

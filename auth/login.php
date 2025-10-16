@@ -3,48 +3,54 @@
 session_start();
 
 if (isset($_SESSION["ssLoginPOS"])) {
-    header("Location: ../dashboard.php");
-    exit();
+  header("Location: ../dashboard.php");
+  exit();
 }
 
 require "../config/config.php";
 
-if (isset($_POST['login'])){
-    $username = mysqli_real_escape_string($koneksi, $_POST['username']);
-    $password = mysqli_real_escape_string($koneksi, $_POST['password']);
+if (isset($_POST['login'])) {
+  $username = mysqli_real_escape_string($koneksi, $_POST['username']);
+  $password = mysqli_real_escape_string($koneksi, $_POST['password']);
 
-    $queryLogin = mysqli_query($koneksi,"SELECT * FROM tbl_user WHERE username = '$username'");
+  $queryLogin = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE username = '$username'");
 
-    if (mysqli_num_rows($queryLogin) === 1) {
-        $row = mysqli_fetch_assoc($queryLogin);
-        if (password_verify($password, $row['password'])) {
-            // set session
-            $_SESSION["ssLoginPOS"] = true;
-            $_SESSION["ssUserPOS"] = $username;
+  if (mysqli_num_rows($queryLogin) === 1) {
+    $row = mysqli_fetch_assoc($queryLogin);
+    if (password_verify($password, $row['password'])) {
+      // Set session lengkap
+      $_SESSION["ssLoginPOS"] = [
+        'user_id' => $row['user_id'],
+        'username' => $row['username'],
+        'nama_user' => $row['fullname'] ?? '', // jika kolom ini ada
+        'level' => $row['level'] ?? ''
+      ];
 
-            header("location: ../dashboard.php");
-            exit();
-        }else{
-            echo "<script>
+      header("location: ../dashboard.php");
+      exit();
+    } else {
+      echo "<script>
             alert('Password salah!');
             </script>";
-        }
-    }else{
-        echo "<script>alert('Username tidak terdaftar!');</script>";
     }
+  } else {
+    echo "<script>alert('Username tidak terdaftar!');</script>";
+  }
 }
 
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login | CAngelline POS</title>
 
   <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="<?= $main_url ?>asset/AdminLTE-3.2.0/plugins/fontawesome-free/css/all.min.css">
   <!-- icheck bootstrap -->
@@ -57,78 +63,79 @@ if (isset($_POST['login'])){
 </head>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const usernameInput = document.querySelector("input[name='username']");
-  const passwordInput = document.querySelector("input[name='password']");
-  const signInBtn = document.querySelector("button[type='submit']");
+  document.addEventListener("DOMContentLoaded", function () {
+    const usernameInput = document.querySelector("input[name='username']");
+    const passwordInput = document.querySelector("input[name='password']");
+    const signInBtn = document.querySelector("button[type='submit']");
 
-  // Enter di username -> pindah ke password
-  usernameInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      passwordInput.focus();
-    }
-  });
+    // Enter di username -> pindah ke password
+    usernameInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        passwordInput.focus();
+      }
+    });
 
-  // Enter di password -> klik tombol Sign In
-  passwordInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      signInBtn.click();
-    }
+    // Enter di password -> klik tombol Sign In
+    passwordInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        signInBtn.click();
+      }
+    });
   });
-});
 </script>
 
 <body class="hold-transition login-page" id="bg-login">
-<div class="login-box slide-down" style="margin-top: -70px;">
-  <!-- /.login-logo -->
-  <div class="card card-outline card-primary">
-    <div class="card-header text-center">
-      <a href="#" class="h1"><b>CAngelline</b>POS</a>
-    </div>
-    <div class="card-body">
-      <p class="login-box-msg">Sign in to start your session</p>
+  <div class="login-box slide-down" style="margin-top: -70px;">
+    <!-- /.login-logo -->
+    <div class="card card-outline card-primary">
+      <div class="card-header text-center">
+        <a href="#" class="h1"><b>CAngelline</b>POS</a>
+      </div>
+      <div class="card-body">
+        <p class="login-box-msg">Sign in to start your session</p>
 
-      <form action="" method="post">
-        <div class="input-group mb-4">
-          <input type="text" name="username" class="form-control" placeholder="Username">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-user"></span>
+        <form action="" method="post">
+          <div class="input-group mb-4">
+            <input type="text" name="username" class="form-control" placeholder="Username">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-user"></span>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="input-group mb-4">
-          <input type="password" name="password" class="form-control" placeholder="Password">
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-lock"></span>
+          <div class="input-group mb-4">
+            <input type="password" name="password" class="form-control" placeholder="Password">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+              </div>
             </div>
           </div>
-        </div>
 
           <div class="mb-4">
             <button type="submit" name="login" class="btn btn-primary btn-block">Sign In</button>
           </div>
           <!-- /.col -->
-      </form>
+        </form>
 
-      <p class="my-3 text-center">
-        <strong>Copyright &copy; 2025 <span class="text-info">CAngelline</span></strong>
-      </p>
+        <p class="my-3 text-center">
+          <strong>Copyright &copy; 2025 <span class="text-info">CAngelline</span></strong>
+        </p>
+      </div>
+      <!-- /.card-body -->
     </div>
-    <!-- /.card-body -->
+    <!-- /.card -->
   </div>
-  <!-- /.card -->
-</div>
-<!-- /.login-box -->
+  <!-- /.login-box -->
 
-<!-- jQuery -->
-<script src="<?= $main_url ?>asset/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="<?= $main_url ?>asset/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE App -->
-<script src="<?= $main_url ?>asset/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
+  <!-- jQuery -->
+  <script src="<?= $main_url ?>asset/AdminLTE-3.2.0/plugins/jquery/jquery.min.js"></script>
+  <!-- Bootstrap 4 -->
+  <script src="<?= $main_url ?>asset/AdminLTE-3.2.0/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- AdminLTE App -->
+  <script src="<?= $main_url ?>asset/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 </body>
+
 </html>

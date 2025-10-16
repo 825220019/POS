@@ -11,12 +11,24 @@ function getData($sql){
 return $rows;
 }
 
-function userLogin(){
-    $userActive = $_SESSION["ssUserPOS"];
-    $dataUser = getData("SELECT * FROM tbl_user WHERE username =
-    '$userActive'")[0];
-    return $dataUser;
+function userLogin() {
+    global $koneksi;
+
+    if (!isset($_SESSION["ssLoginPOS"])) {
+        return null;
+    }
+
+    $userActive = $_SESSION["ssLoginPOS"]["username"];
+    $result = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE username = '$userActive'");
+
+    if (mysqli_num_rows($result) === 0) {
+        return null;
+    }
+
+    return mysqli_fetch_assoc($result);
 }
+
+
 
 function userMenu(){
     $uri_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -87,6 +99,63 @@ function menuBarang(){
         $result = null;
     }
     return $result;
+}
+function menuBeli(){
+    if (userMenu() == 'pembelian'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
+function menuJual(){
+    if (userMenu() == 'penjualan'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
+function laporanBeli(){
+    if (userMenu() == 'laporan-pembelian'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
+function laporanJual(){
+    if (userMenu() == 'laporan-penjualan'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
+function LaporanStock(){
+    if (userMenu() == 'stock'){
+        $result = 'active';
+    }else{
+        $result = null;
+    }
+    return $result;
+}
+
+function in_date($tgl){
+    $tg = substr($tgl, 8, 2);
+    $bl = substr($tgl, 5, 2);
+    $thn = substr($tgl, 0, 4);
+
+    return $tg . '-' . $bl . '-' . $thn;
+}
+
+function omzet(){
+    global $koneksi;
+    $queryOmzet = mysqli_query($koneksi, "SELECT SUM(total) as omzet FROM tbl_jual_head");
+    $data = mysqli_fetch_assoc($queryOmzet);
+    $omzet = number_format($data['omzet'],0,',','.');
+    
+    return $omzet;
 }
 
 ?>

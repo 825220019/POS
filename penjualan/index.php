@@ -14,6 +14,10 @@ require "../template/header.php";
 require "../template/navbar.php";
 require "../template/sidebar.php";
 
+$userLogin = userLogin();
+$user_id = $userLogin["user_id"];
+
+
 $msg = $_GET['msg'] ?? '';
 
 // Hapus item dari keranjang
@@ -35,7 +39,7 @@ if (!isset($_SESSION['cart'])) {
 if (isset($_POST['addbrg'])) {
     $idSatuan = $_POST['satuan'];
     $qty = (int) $_POST['qty'];
-    $harga = (int) $_POST['harga'];
+    $harga = (int) $_POST['harga_jual'];
     $subtotal = $qty * $harga;
     $tgl = $_POST['tglNota'];
     $pelanggan = $_POST['pelanggan'];
@@ -43,12 +47,19 @@ if (isset($_POST['addbrg'])) {
 
     $idSatuan = $_POST['satuan'] ?? null;
 
+    if (empty($idSatuan)) {
+        echo "<script>alert('Silakan pilih satuan terlebih dahulu!');</script>";
+        echo "<script>history.back();</script>";
+        exit;
+    }
+
     if ($idSatuan) {
         $qStok = mysqli_query($koneksi, "
-        SELECT b.stok, s.jumlah_isi AS faktor_konversi
-        FROM tbl_satuan s
-        JOIN tbl_barang b ON s.id_barang = b.id_barang
-        WHERE s.id_satuan = '$idSatuan'
+        SELECT b.stok, s.jumlah_isi AS faktor_konversi, v.nama_varian
+FROM tbl_satuan s
+JOIN tbl_barang b ON s.id_barang = b.id_barang
+LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
+WHERE s.id_satuan = '$idSatuan'
     ");
         $dataStok = mysqli_fetch_assoc($qStok);
     }
@@ -106,7 +117,7 @@ if (isset($_POST['addbrg'])) {
         $_SESSION['cart'][] = [
             'id_satuan' => $idSatuan,
             'qty' => $qty,
-            'harga' => $harga,
+            'harga_jual' => $harga,
             'subtotal' => $subtotal
         ];
     }
@@ -152,10 +163,14 @@ if (isset($_POST['simpan'])) {
     }
 
     // 🧾 Simpan ke tabel jual head
-    $insertHead = mysqli_query($koneksi, "INSERT INTO tbl_jual_head 
-        (no_jual, tgl_jual, pelanggan, total, hutang, jml_bayar, kembalian)
-        VALUES ('$nojual', '$tgl', '$pelanggan', '$total', '$hutang', '$jml_bayar', '$kembalian')");
+    // Ambil user_id dari session login
+    $user_id = $_SESSION['ssLoginPOS']['user_id'] ?? 0;
 
+    // 🧾 Simpan ke tabel jual head
+    $insertHead = mysqli_query($koneksi, "INSERT INTO tbl_jual_head 
+(no_jual, tgl_jual, total, hutang, jml_bayar, kembalian, user_id, id_pelanggan)
+VALUES 
+('$nojual', '$tgl', '$total', '$hutang', '$jml_bayar', '$kembalian', '$user_id', '$id_pelanggan')");
     if (!$insertHead) {
         die('Gagal menyimpan data penjualan head: ' . mysqli_error($koneksi));
     }
@@ -164,20 +179,18 @@ if (isset($_POST['simpan'])) {
     foreach ($_SESSION['cart'] as $item) {
         $idSatuan = $item['id_satuan'];
         $qty = (int) $item['qty'];
-        $harga = (int) $item['harga'];
+        $harga = (int) $item['harga_jual'];
         $subtotal = (int) $item['subtotal'];
 
         // Ambil data barang dan faktor konversi
         $qBarang = mysqli_query($koneksi, "
-        SELECT b.id_barang, s.jumlah_isi AS faktor_konversi
-        FROM tbl_satuan s
-        JOIN tbl_barang b ON s.id_barang = b.id_barang
-        WHERE s.id_satuan = '$idSatuan'
-    ");
+    SELECT b.id_barang, s.jumlah_isi AS faktor_konversi, s.id_varian
+    FROM tbl_satuan s
+    JOIN tbl_barang b ON s.id_barang = b.id_barang
+    WHERE s.id_satuan = '$idSatuan'
+");
         $barang = mysqli_fetch_assoc($qBarang);
-        if (!$barang)
-            continue;
-
+        $idVarian = $barang['id_varian'] ?? 'NULL';
         $idBarang = $barang['id_barang'];
         $faktor = (int) ($barang['faktor_konversi'] ?? 1);
         $qtyDasar = $qty * $faktor;
@@ -186,9 +199,16 @@ if (isset($_POST['simpan'])) {
         mysqli_query($koneksi, "UPDATE tbl_barang SET stok = stok - $qtyDasar WHERE id_barang = '$idBarang'");
 
         // Insert ke detail jual
-        $insertDetail = mysqli_query($koneksi, "INSERT INTO tbl_jual_detail 
-        (no_jual, tgl_jual, kode_brg, nama_brg, qty, harga_jual, jml_harga)
-        VALUES ('$nojual', '$tgl', '$idBarang', '', $qty, $harga, $subtotal)");
+        // Ambil nama barang untuk ditampilkan di struk
+        $qNama = mysqli_query($koneksi, "SELECT nama_barang FROM tbl_barang WHERE id_barang='$idBarang'");
+        $dNama = mysqli_fetch_assoc($qNama);
+        $namaBarang = $dNama['nama_barang'] ?? '';
+
+        $insertDetail = mysqli_query($koneksi, "
+     INSERT INTO tbl_jual_detail 
+(no_jual, tgl_jual, id_barang, id_varian, nama_brg, qty, harga_jual, jml_harga, id_satuan)
+VALUES 
+('$nojual', '$tgl', '$idBarang', '$idVarian', '$namaBarang', $qty, $harga, $subtotal, '$idSatuan')");
     }
 
 
@@ -197,14 +217,15 @@ if (isset($_POST['simpan'])) {
 
     // ✅ Tampilkan pesan sukses dan buka struk
     echo "<script>
-    alert('Data penjualan berhasil disimpan!');
-    let win = window.open('../report/r-struk.php?nojual=$nojual', 'Struk Penjualan', 'width=260,height=400,left=10,top=10');
-    if (win) {
-        win.focus();
-    }
+alert('Data penjualan berhasil disimpan!');
+let win = window.open('../report/r-struk.php?nojual=$nojual', 'Struk Penjualan', 'width=800,height=400,left=10,top=10');
+if (win) {
+    win.focus();
+}
+setTimeout(() => {
     window.location='index.php';
+}, 2000);
 </script>";
-
 }
 
 
@@ -259,7 +280,7 @@ if (!empty($_SESSION['cart'])) {
                             <div class="form-group row mb-2 mt-3">
                                 <label for="noNota" class="col-sm-2 col-form-label">No Nota</label>
                                 <div class="col-sm-4">
-                                    <input type="text" name="nojual" class="form-control" id="noNote"
+                                    <input type="text" name="nojual" class="form-control" id="noNota"
                                         value="<?= $noJual ?>" readonly>
                                 </div>
                                 <label for="tglNota" class="col-sm-2 col-form-label">Tgl Nota</label>
@@ -350,14 +371,14 @@ if (!empty($_SESSION['cart'])) {
                             <div class="form-group">
                                 <label for="stok">Stok</label>
                                 <input type="number" name="stok" id="stok" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['stock'] ?? '' ?>" readonly>
+                                    value="<?= $selectBrg['stok'] ?? '' ?>" readonly>
                             </div>
                         </div>
                         <div class="col-lg-2">
                             <div class="form-group">
-                                <label for="harga">Harga</label>
-                                <input type="number" name="harga" id="harga" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['harga_jual'] ?? '' ?>">
+                                <label for="harga_jual">Harga</label>
+                                <input type="number" name="harga_jual" id="harga_jual"
+                                    class="form-control form-control-sm" value="<?= $selectBrg['harga_jual'] ?? '' ?>">
                             </div>
                         </div>
                         <div class="col-lg-2">
@@ -397,17 +418,22 @@ if (!empty($_SESSION['cart'])) {
                             $total = 0;
                             if (!empty($_SESSION['cart'])) {
                                 foreach ($_SESSION['cart'] as $key => $item) {
-                                    $q = mysqli_query($koneksi, "SELECT b.nama_barang, s.satuan 
-                                        FROM tbl_satuan s 
-                                        JOIN tbl_barang b ON s.id_barang=b.id_barang 
-                                        WHERE s.id_satuan='{$item['id_satuan']}'");
+                                    $q = mysqli_query($koneksi, "
+    SELECT b.nama_barang, s.satuan, v.nama_varian
+    FROM tbl_satuan s
+    JOIN tbl_barang b ON s.id_barang = b.id_barang
+    LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
+    WHERE s.id_satuan = '{$item['id_satuan']}'
+");
                                     $row = mysqli_fetch_assoc($q);
                                     $total += $item['subtotal'];
                                     echo "
 <tr>
     <td>$no</td>
-    <td>{$row['nama_barang']} ({$row['satuan']})</td>
-    <td>" . number_format($item['harga'], 0, ',', '.') . "</td>
+    <td>{$row['nama_barang']}" .
+                                        (!empty($row['nama_varian']) ? " - {$row['nama_varian']}" : "") .
+                                        " ({$row['satuan']})</td>
+    <td>" . number_format($item['harga_jual'], 0, ',', '.') . "</td>
     <td>{$item['qty']}</td>
     <td>" . number_format($item['subtotal'], 0, ',', '.') . "</td>
     <td><a href='?hapus={$key}&tgl={$_GET['tgl']}' class='btn btn-sm btn-danger' onclick=\"return confirm('Hapus barang ini?')\"><i class='fas fa-trash'></i></a></td>
@@ -428,7 +454,7 @@ if (!empty($_SESSION['cart'])) {
     // Script untuk ambil data satuan dan hitung harga
     let namaBrg = document.getElementById('namaBrg');
     let kodeBrg = document.getElementById('kodeBrg');
-    let harga = document.getElementById('harga');
+    let harga = document.getElementById('harga_jual');
     let stok = document.getElementById('stok');
     let qty = document.getElementById('qty');
     let jmlHarga = document.getElementById('jmlHarga');
@@ -443,11 +469,11 @@ if (!empty($_SESSION['cart'])) {
     });
 
     satuan.addEventListener('change', function () {
-    let selected = this.options[this.selectedIndex];
-    harga.value = selected.getAttribute('data-harga') || 0;
-    stok.value = selected.getAttribute('data-stok') || 0;
-    hitungSubTotal(); // otomatis hitung ulang
-});
+        let selected = this.options[this.selectedIndex];
+        harga.value = selected.getAttribute('data-harga') || 0;
+        stok.value = selected.getAttribute('data-stok') || 0;
+        hitungSubTotal(); // otomatis hitung ulang
+    });
 
     function hitungSubTotal() {
         let q = parseFloat(qty.value) || 0;
@@ -471,7 +497,7 @@ if (!empty($_SESSION['cart'])) {
                             opt.value = item.id_satuan;
                             opt.text = item.satuan + (item.nama_varian ? " - " + item.nama_varian : "");
                             opt.setAttribute('data-harga', item.harga_jual);
-                            opt.setAttribute('data-stok', item.stock);
+                            opt.setAttribute('data-stok', item.stok);
                             satuan.appendChild(opt);
                         });
                     });

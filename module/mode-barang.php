@@ -20,10 +20,10 @@ function insert($post)
     global $koneksi;
     $id_barang = generateId();
 
-    $nama_barang   = mysqli_real_escape_string($koneksi, $post['name']);
-    $supplier      = mysqli_real_escape_string($koneksi, $post['supplier']);
+    $nama_barang = mysqli_real_escape_string($koneksi, $post['name']);
+    $supplier = mysqli_real_escape_string($koneksi, $post['supplier']);
     $stock_minimal = mysqli_real_escape_string($koneksi, $post['stock_minimal']);
-    $harga_beli    = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_beli']));
+    $harga_beli = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_beli']));
 
     // ambil harga jual utama dari baris pertama
     $harga_jual = is_array($post['harga_jual'])
@@ -31,15 +31,18 @@ function insert($post)
         : mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
 
     // ambil satuan terakhir (dasar)
+    // Ambil satuan dari form
     $satuans = array_filter($post['satuan']);
-    $satuan_dasar = mysqli_real_escape_string($koneksi, end($satuans));
+    $satuan_tertinggi = mysqli_real_escape_string($koneksi, $satuans[0]); // baris pertama
+    $satuan_dasar = mysqli_real_escape_string($koneksi, end($satuans)); // baris terakhir
 
-    // simpan ke tbl_barang
+    // tbl_barang
     $sqlBarang = "INSERT INTO tbl_barang 
-        (id_barang, nama_barang, satuan_dasar, stok, id_supplier, harga_beli, harga_jual, stock_minimal, created_at) 
-        VALUES 
-        ('$id_barang', '$nama_barang', '$satuan_dasar', 0, '$supplier', '$harga_beli', '$harga_jual', '$stock_minimal', NOW())";
+    (id_barang, nama_barang, satuan_dasar, satuan_tertinggi, stok, id_supplier, harga_beli, harga_jual, stock_minimal, created_at) 
+    VALUES 
+    ('$id_barang', '$nama_barang', '$satuan_dasar', '$satuan_tertinggi', 0, '$supplier', '$harga_beli', '$harga_jual', '$stock_minimal', NOW())";
     mysqli_query($koneksi, $sqlBarang);
+
 
     // simpan varian & satuan
     $varians = array_filter($post['varian']);
@@ -95,16 +98,19 @@ function update($post)
         : mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
 
     $satuans = array_filter($post['satuan']);
+    $satuan_tertinggi = mysqli_real_escape_string($koneksi, $satuans[0]);
     $satuan_dasar = mysqli_real_escape_string($koneksi, end($satuans));
 
     mysqli_query($koneksi, "UPDATE tbl_barang 
-        SET nama_barang='$nama_barang', 
-            id_supplier='$supplier', 
-            harga_beli='$harga_beli', 
-            harga_jual='$harga_jual', 
-            satuan_dasar='$satuan_dasar',
-            stock_minimal='$stock_minimal'
-        WHERE id_barang='$id_barang'");
+    SET nama_barang='$nama_barang', 
+        id_supplier='$supplier', 
+        harga_beli='$harga_beli', 
+        harga_jual='$harga_jual', 
+        satuan_dasar='$satuan_dasar',
+        satuan_tertinggi='$satuan_tertinggi',
+        stock_minimal='$stock_minimal'
+    WHERE id_barang='$id_barang'");
+
 
     // reset varian & satuan lama
     mysqli_query($koneksi, "DELETE FROM tbl_satuan WHERE id_barang='$id_barang'");
@@ -182,4 +188,3 @@ function syncKonversiSatuan($id_barang)
     }
 }
 ?>
-

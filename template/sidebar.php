@@ -22,7 +22,8 @@
           </a>
         </li>
         <?php
-        if (userLogin()['level'] != 'kasir') {
+        $user = userLogin();
+if ($user && $user['level'] != 'kasir') {
           ?>
           <li class="nav-item <?= menuMaster() ?>">
             <a href="#" class="nav-link">
@@ -56,7 +57,7 @@
         <?php } ?>
         <li class="nav-header">Transaksi</li>
         <li class="nav-item">
-          <a href="<?= $main_url ?>pembelian/index.php" class="nav-link">
+          <a href="<?= $main_url ?>pembelian/index.php" class="nav-link <?= menuBeli() ?>">
             <i class="nav-icon fas fa-shopping-cart text-sm"></i>
             <p>
               Pembelian
@@ -64,7 +65,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="<?= $main_url ?>penjualan/index.php" class="nav-link">
+          <a href="<?= $main_url ?>penjualan/index.php" class="nav-link <?= menuJual() ?>">
             <i class="nav-icon fas fa-file-invoice text-sm"></i>
             <p>
               Penjualan
@@ -73,19 +74,19 @@
         </li>
         <li class="nav-header">Report</li>
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="<?= $main_url ?>laporan-pembelian/index.php" class="nav-link <?= laporanBeli() ?>">
             <i class="nav-icon fas fa-chart-pie text-sm"></i>
             <p>Laporan Pembelian</p>
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="<?= $main_url ?>laporan-penjualan/index.php" class="nav-link <?= laporanJual() ?>">
             <i class="nav-icon fas fa-chart-line text-sm"></i>
             <p>Laporan Penjualan</p>
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="<?= $main_url ?>stock/index.php" class="nav-link <?= laporanStock() ?>">
             <i class="nav-icon fas fa-warehouse text-sm"></i>
             <p>
               Laporan Stock
@@ -93,7 +94,7 @@
           </a>
         </li>
         <?php
-        if (userLogin()['level'] == 'admin') {
+        if ($user && $user['level'] == 'admin') {
           ?>
           <li class="nav-item <?= menuSetting() ?>">
             <a href="#" class="nav-link">

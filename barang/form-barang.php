@@ -109,46 +109,46 @@ if (isset($_POST['simpan'])) {
       minimumFractionDigits: 0
     });
 
-function updatePlaceholders() {
-  const hargaBeli = parseFloat(beliInput.value.replace(/\D/g, "")) || 0;
-  const hargaJualAtas = parseFloat(hargaJualUtama.value.replace(/\D/g, "")) || 0;
+    function updatePlaceholders() {
+      const hargaBeli = parseFloat(beliInput.value.replace(/\D/g, "")) || 0;
+      const hargaJualAtas = parseFloat(hargaJualUtama.value.replace(/\D/g, "")) || 0;
 
-  // 🔹 Baris pertama = harga jual utama
-  if (jualInputs[0]) {
-    jualInputs[0].placeholder = hargaJualAtas > 0
-      ? formatter.format(Math.round(hargaJualAtas))
-      : "Rp 0";
-  }
+      // 🔹 Baris pertama = harga jual utama
+      if (jualInputs[0]) {
+        jualInputs[0].placeholder = hargaJualAtas > 0
+          ? formatter.format(Math.round(hargaJualAtas))
+          : "Rp 0";
+      }
 
-  // 🔹 Baris kedua = harga beli ÷ jumlah isi baris pertama
-  let hargaBaris2 = 0;
-  if (jualInputs[1]) {
-    const qtyPertama = parseFloat(jumlahInputs[0].value) || 0;
-    if (hargaBeli > 0 && qtyPertama > 0) {
-      hargaBaris2 = Math.round(hargaBeli / qtyPertama);
-      jualInputs[1].placeholder = formatter.format(hargaBaris2);
-    } else {
-      jualInputs[1].placeholder = "Rp 0";
-      hargaBaris2 = 0;
+      // 🔹 Baris kedua = harga beli ÷ jumlah isi baris pertama
+      let hargaBaris2 = 0;
+      if (jualInputs[1]) {
+        const qtyPertama = parseFloat(jumlahInputs[0].value) || 0;
+        if (hargaBeli > 0 && qtyPertama > 0) {
+          hargaBaris2 = Math.round(hargaBeli / qtyPertama);
+          jualInputs[1].placeholder = formatter.format(hargaBaris2);
+        } else {
+          jualInputs[1].placeholder = "Rp 0";
+          hargaBaris2 = 0;
+        }
+      }
+
+      // 🔹 Baris ketiga = harga baris kedua ÷ jumlah isi baris kedua
+      if (jualInputs[2]) {
+        const qtyKedua = parseFloat(jumlahInputs[1].value) || 0;
+        if (hargaBaris2 > 0 && qtyKedua > 0) {
+          const hargaBaris3 = Math.round(hargaBaris2 / qtyKedua);
+          jualInputs[2].placeholder = formatter.format(hargaBaris3);
+        } else {
+          jualInputs[2].placeholder = "Rp 0";
+        }
+      }
+
+      // 🔹 Baris ke-4 dst tetap placeholder 0
+      for (let i = 3; i < jualInputs.length; i++) {
+        jualInputs[i].placeholder = "Rp 0";
+      }
     }
-  }
-
-  // 🔹 Baris ketiga = harga baris kedua ÷ jumlah isi baris kedua
-  if (jualInputs[2]) {
-    const qtyKedua = parseFloat(jumlahInputs[1].value) || 0;
-    if (hargaBaris2 > 0 && qtyKedua > 0) {
-      const hargaBaris3 = Math.round(hargaBaris2 / qtyKedua);
-      jualInputs[2].placeholder = formatter.format(hargaBaris3);
-    } else {
-      jualInputs[2].placeholder = "Rp 0";
-    }
-  }
-
-  // 🔹 Baris ke-4 dst tetap placeholder 0
-  for (let i = 3; i < jualInputs.length; i++) {
-    jualInputs[i].placeholder = "Rp 0";
-  }
-}
 
     // Format input menjadi rupiah otomatis saat mengetik
     document.querySelectorAll('.harga_jual').forEach(input => {
@@ -349,8 +349,6 @@ function updatePlaceholders() {
           </div>
         </div>
       </div>
-
-
       </form>
     </div>
   </section>

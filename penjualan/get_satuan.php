@@ -12,13 +12,12 @@ if ($id_barang == '') {
 }
 
 // Ambil stok dalam bentuk integer (tidak desimal)
-$sql = "SELECT s.id_satuan, s.satuan, s.harga_jual, 
-       FLOOR(b.stok / s.jumlah_isi) AS stock,
-       v.nama_varian
+$sql = "SELECT s.id_satuan, s.satuan, s.harga_jual, s.jumlah_isi, v.nama_varian, b.stok
 FROM tbl_satuan s
-LEFT JOIN tbl_barang b ON s.id_barang = b.id_barang
+JOIN tbl_barang b ON s.id_barang = b.id_barang
 LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
-WHERE s.id_barang = '$id_barang'";
+WHERE s.id_barang = '$id_barang'
+";
 
 
 $result = getData($sql);

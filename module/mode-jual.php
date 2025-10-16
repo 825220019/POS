@@ -2,26 +2,26 @@
 function generateNo()
 {
     global $koneksi;
-
     $queryNo = mysqli_query($koneksi, "SELECT MAX(no_jual) AS maxno FROM tbl_jual_head");
     $row = mysqli_fetch_assoc($queryNo);
-    $maxno = $row["maxno"];
+    $maxno = $row["maxno"] ?? 'PJ0000';
 
-    $noUrut = (int) substr($maxno, 2, 4);
+    $noUrut = (int) substr($maxno, 2);
     $noUrut++;
-    $maxno = 'PJ' . sprintf("%04s", $noUrut);
-
-    return $maxno;
+    $newNo = 'PJ' . sprintf("%04s", $noUrut);
+    return $newNo;
 }
+
 
 function getBarangDetailBySatuan($id_satuan)
 {
     global $koneksi;
 
-    $query = "SELECT b.* 
-              FROM tbl_satuan s
-              JOIN tbl_barang b ON s.id_barang = b.id_barang
-              WHERE s.id_satuan = '$id_satuan'";
+    $query = "SELECT b.*, s.satuan, s.harga_jual, s.jumlah_isi, v.nama_varian, v.id_varian
+          FROM tbl_satuan s
+          JOIN tbl_barang b ON s.id_barang = b.id_barang
+          LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
+          WHERE s.id_satuan = '$id_satuan'";
 
     $result = mysqli_query($koneksi, $query);
     return mysqli_fetch_assoc($result);
@@ -29,10 +29,11 @@ function getBarangDetailBySatuan($id_satuan)
 
 function getSatuanByBarang($id_barang)
 {
-    $query = "SELECT s.*, v.nama_varian 
-              FROM tbl_satuan s
-              LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
-              WHERE s.id_barang = '$id_barang'";
+    $query = "SELECT s.id_satuan, s.satuan, s.harga_jual, s.jumlah_isi, v.nama_varian, b.stok
+FROM tbl_satuan s
+JOIN tbl_barang b ON s.id_barang = b.id_barang
+LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
+WHERE s.id_barang = '$id_barang'";
     return getData($query);
 }
 
@@ -126,30 +127,6 @@ function insert($data)
     mysqli_query($koneksi, "UPDATE tbl_barang SET stok = stok - $qtyDasar WHERE id_barang='$idBarang'");
 
 
-
-    return true;
-}
-
-
-/**
- * Simpan total transaksi penjualan
- */
-function simpanPenjualan($data)
-{
-    global $koneksi;
-
-    $nojual = mysqli_real_escape_string($koneksi, $data['nojual']);
-    $tgl = mysqli_real_escape_string($koneksi, $data['tglNota']);
-    $pelanggan = mysqli_real_escape_string($koneksi, $data['pelanggan']);
-    $total = mysqli_real_escape_string($koneksi, $data['total']);
-
-    // Update total di header
-    $sqlUpdate = "UPDATE tbl_jual_head 
-                  SET total='$total', tgl_jual='$tgl', id_pelanggan='$pelanggan' 
-                  WHERE no_jual='$nojual'";
-    if (!mysqli_query($koneksi, $sqlUpdate)) {
-        die('Error update header: ' . mysqli_error($koneksi));
-    }
 
     return true;
 }
@@ -251,7 +228,4 @@ function updateJual($data)
 
     return mysqli_query($koneksi, $sql);
 }
-
-
-
 ?>
