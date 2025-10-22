@@ -68,7 +68,7 @@ if ($selisih >= 0) {
     <table style="border-bottom: solid 2px; text-align:center;
     font-size: 14px; width:240px;">
         <tr>
-            <td><b>CAngelline POS</b></td>
+            <td><b>Toko Niaga Jaya</b></td>
         </tr>
         <tr>
             <td><?= 'Kasir : ' . userLogin()['username'] ?></td>

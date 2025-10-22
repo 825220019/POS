@@ -292,16 +292,16 @@ if (!empty($_SESSION['cart'])) {
                             <div class="form-group row mb-2 mt-4">
                                 <label for="pelanggan" class="col-sm-2 col-form-label">Pelanggan</label>
                                 <div class="col-sm-10">
-                                    <select name="pelanggan" id="pelanggan" class="form-control form-control-sm"
-                                        required>
+                                    <select name="pelanggan" id="pelanggan"
+                                        class="form-control form-control-sm js-example-basic-single" required>
                                         <option value="">-- Pilih Pelanggan --</option>
                                         <?php
                                         $pelangganQ = mysqli_query($koneksi, "SELECT * FROM tbl_pelanggan");
                                         while ($p = mysqli_fetch_assoc($pelangganQ)) {
                                             $selected = (isset($_GET['pelanggan']) && $_GET['pelanggan'] == $p['id_pelanggan']) ? 'selected' : '';
                                             echo "<option value='{$p['id_pelanggan']}' $selected>
-                        {$p['nama']} | {$p['deskripsi']}
-                      </option>";
+                                                    {$p['nama']} | {$p['deskripsi']}
+                                                    </option>";
                                         }
                                         ?>
                                     </select>

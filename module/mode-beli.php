@@ -1,4 +1,9 @@
 <?php
+
+if (userLogin()['level'] == 'kasir') {
+    header("location:" . $main_url . "error-page.php");
+    exit();
+}
 function generateNo() {
     global $koneksi;
     $queryNo = mysqli_query($koneksi, "SELECT MAX(no_beli) AS maxno FROM tbl_beli_head");

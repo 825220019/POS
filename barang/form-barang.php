@@ -170,6 +170,29 @@ if (isset($_POST['simpan'])) {
     jumlahInputs.forEach(inp => inp.addEventListener('input', updatePlaceholders));
   });
 
+  // 🔸 Cek input harga beli & harga jual agar tidak negatif
+document.querySelector("form").addEventListener("submit", function (e) {
+  const hargaBeliInput = document.querySelector("input[name='harga_beli']");
+  const hargaJualInputs = document.querySelectorAll("input[name='harga_jual'], input[name='harga_jual[]']");
+  
+  // Hapus semua non-digit dan tanda minus
+  const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^\d-]/g, '')) || 0;
+  if (hargaBeli < 0) {
+    alert("Harga beli tidak valid! Tidak boleh bernilai negatif.");
+    e.preventDefault();
+    return false;
+  }
+
+  for (const input of hargaJualInputs) {
+    const hargaJual = parseFloat(input.value.replace(/[^\d-]/g, '')) || 0;
+    if (hargaJual < 0) {
+      alert("Harga jual tidak valid! Tidak boleh bernilai negatif.");
+      e.preventDefault();
+      return false;
+    }
+  }
+});
+
 
 </script>
 

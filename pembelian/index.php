@@ -174,7 +174,7 @@ $noBeli = generateNo()
                             <div class="form-group row mb-2">
                                 <label for="supplier" class="col-sm-2 col-form-label">Supplier</label>
                                 <div class="col-sm-10">
-                                    <select name="supplier" id="supplier" class="form-control form-control-sm" required>
+                                    <select name="supplier" id="supplier" class="form-control form-control-sm js-example-basic-single" required>
                                         <option value="">-- Pilih Supplier --</option>
                                         <?php
                                         $suppliers = mysqli_query($koneksi, "SELECT * FROM tbl_supplier");

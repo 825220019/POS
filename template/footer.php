@@ -27,9 +27,14 @@
 <script src="<?= $main_url?>asset/AdminLTE-3.2.0/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
 <!-- AdminLTE -->
 <script src="<?= $main_url?>asset/AdminLTE-3.2.0/dist/js/adminlte.js"></script>
-
 <!-- OPTIONAL SCRIPTS -->
 <script src="<?= $main_url?>asset/AdminLTE-3.2.0/plugins/chart.js/Chart.min.js"></script>
+<!-- Select2 -->
+<script>
+$(document).ready(function() {
+    $('.js-example-basic-single').select2();
+});
+</script>
 
 <script>
   $(function(){

@@ -1,6 +1,6 @@
 <?php
-if (userLogin()['level'] == 2){
-    header("location:" .$main_url."error-page.php");
+if (userLogin()['level'] == 'kasir') {
+    header("location:" . $main_url . "error-page.php");
     exit();
 }
 

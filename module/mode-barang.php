@@ -25,10 +25,20 @@ function insert($post)
     $stock_minimal = mysqli_real_escape_string($koneksi, $post['stock_minimal']);
     $harga_beli = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_beli']));
 
+    if ($harga_beli < 0) {
+        echo "<script>alert('Harga beli tidak valid! Tidak boleh bernilai negatif.');history.back();</script>";
+        exit();
+    }
+
+
     // ambil harga jual utama dari baris pertama
     $harga_jual = is_array($post['harga_jual'])
         ? mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][0]))
         : mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
+    if ($harga_jual < 0) {
+        echo "<script>alert('Harga jual tidak valid! Tidak boleh bernilai negatif.');history.back();</script>";
+        exit();
+    }
 
     // ambil satuan terakhir (dasar)
     // Ambil satuan dari form
@@ -92,11 +102,17 @@ function update($post)
     $supplier = mysqli_real_escape_string($koneksi, $post['supplier']);
     $stock_minimal = mysqli_real_escape_string($koneksi, $post['stock_minimal']);
     $harga_beli = mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_beli']));
-
+    if ($harga_beli < 0) {
+        echo "<script>alert('Harga beli tidak valid! Tidak boleh bernilai negatif.');history.back();</script>";
+        exit();
+    }
     $harga_jual = is_array($post['harga_jual'])
         ? mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][0]))
         : mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
-
+    if ($harga_jual < 0) {
+        echo "<script>alert('Harga jual tidak valid! Tidak boleh bernilai negatif.');history.back();</script>";
+        exit();
+    }
     $satuans = array_filter($post['satuan']);
     $satuan_tertinggi = mysqli_real_escape_string($koneksi, $satuans[0]);
     $satuan_dasar = mysqli_real_escape_string($koneksi, end($satuans));
