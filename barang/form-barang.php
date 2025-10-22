@@ -170,28 +170,93 @@ if (isset($_POST['simpan'])) {
     jumlahInputs.forEach(inp => inp.addEventListener('input', updatePlaceholders));
   });
 
-  // 🔸 Cek input harga beli & harga jual agar tidak negatif
-document.querySelector("form").addEventListener("submit", function (e) {
-  const hargaBeliInput = document.querySelector("input[name='harga_beli']");
-  const hargaJualInputs = document.querySelectorAll("input[name='harga_jual'], input[name='harga_jual[]']");
-  
-  // Hapus semua non-digit dan tanda minus
-  const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^\d-]/g, '')) || 0;
-  if (hargaBeli < 0) {
-    alert("Harga beli tidak valid! Tidak boleh bernilai negatif.");
-    e.preventDefault();
-    return false;
-  }
+  document.addEventListener("DOMContentLoaded", function () {
+    const hargaBeliInput = document.querySelector("input[name='harga_beli']");
 
-  for (const input of hargaJualInputs) {
-    const hargaJual = parseFloat(input.value.replace(/[^\d-]/g, '')) || 0;
-    if (hargaJual < 0) {
-      alert("Harga jual tidak valid! Tidak boleh bernilai negatif.");
+    function validasiHargaJual(input) {
+      const hargaBeli = parseFloat(hargaBeliInput.value.replace(/\D/g, "")) || 0;
+      const hargaJual = parseFloat(input.value.replace(/\D/g, "")) || 0;
+      if (hargaJual > 0 && hargaJual < hargaBeli) {
+        alert("⚠️ Harga jual tidak boleh lebih kecil dari harga beli!");
+        input.value = ""; // kosongkan kolom biar user isi ulang
+        input.focus();
+        return false;
+      }
+      return true;
+    }
+
+    // cek setiap kali user keluar dari kolom harga jual
+    document.querySelectorAll(".harga_jual").forEach(input => {
+      input.addEventListener("blur", () => validasiHargaJual(input));
+    });
+
+    // cegah submit form kalau ada yang salah
+    document.querySelector("form").addEventListener("submit", function (e) {
+      const hargaJualInputs = document.querySelectorAll(".harga_jual");
+      for (const input of hargaJualInputs) {
+        if (!validasiHargaJual(input)) {
+          e.preventDefault();
+          return false;
+        }
+      }
+    });
+  });
+
+
+  // 🔸 Cek input harga beli & harga jual agar tidak negatif
+  document.querySelector("form").addEventListener("submit", function (e) {
+    const hargaBeliInput = document.querySelector("input[name='harga_beli']");
+    const hargaJualInputs = document.querySelectorAll("input[name='harga_jual'], input[name='harga_jual[]']");
+
+    // Hapus semua non-digit dan tanda minus
+    const hargaBeli = parseFloat(hargaBeliInput.value.replace(/[^\d-]/g, '')) || 0;
+    if (hargaBeli < 0) {
+      alert("Harga beli tidak valid! Tidak boleh bernilai negatif.");
       e.preventDefault();
       return false;
     }
-  }
-});
+
+    for (const input of hargaJualInputs) {
+      const hargaJual = parseFloat(input.value.replace(/[^\d-]/g, '')) || 0;
+      if (hargaJual < 0) {
+        alert("Harga jual tidak valid! Tidak boleh bernilai negatif.");
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+
+  // 🔸 Cek harga jual tidak boleh lebih kecil dari harga beli
+  document.querySelector("form").addEventListener("submit", function (e) {
+    const hargaBeliInput = document.querySelector("input[name='harga_beli']");
+    const hargaJualUtamaInput = document.querySelector("input[name='harga_jual']");
+    const hargaJualArray = document.querySelectorAll("input[name='harga_jual[]']");
+
+    // ubah format ke angka
+    const hargaBeli = parseFloat(hargaBeliInput.value.replace(/\D/g, "")) || 0;
+
+    // cek harga jual utama
+    if (hargaJualUtamaInput) {
+      const hargaJualUtama = parseFloat(hargaJualUtamaInput.value.replace(/\D/g, "")) || 0;
+      if (hargaJualUtama < hargaBeli) {
+        alert("Harga jual utama tidak boleh lebih kecil dari harga beli!");
+        hargaJualUtamaInput.focus();
+        e.preventDefault();
+        return false;
+      }
+    }
+
+    // cek semua harga jual varian
+    for (const input of hargaJualArray) {
+      const hargaJual = parseFloat(input.value.replace(/\D/g, "")) || 0;
+      if (hargaJual > 0 && hargaJual < hargaBeli) {
+        alert("Harga jual tidak boleh lebih kecil dari harga beli!");
+        input.focus();
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
 
 
 </script>

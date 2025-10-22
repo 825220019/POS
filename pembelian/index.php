@@ -186,7 +186,7 @@ $noBeli = generateNo()
                                         }
                                         ?>
                                     </select>
-                                </div>
+                                </div> 
                             </div>
                         </div>
                     </div>
@@ -207,7 +207,7 @@ $noBeli = generateNo()
                                 <input type="hidden" name="kodeBrg" id="kodeBrg">
                                 <label for="namaBrg">Nama Barang</label>
                                 <input list="listBarang" name="namaBrg" class="form-control form-control-sm"
-                                    id="namaBrg">
+                                    id="namaBrg" required>
                                 <datalist id="listBarang">
                                     <?php
                                     foreach ($barangList as $b) {
@@ -223,7 +223,7 @@ $noBeli = generateNo()
                         <div class="col-lg-2">
                             <div class="form-group">
                                 <label for="satuan">Satuan</label>
-                                <select name="satuan" id="satuan" class="form-control form-control-sm">
+                                <select name="satuan" id="satuan" class="form-control form-control-sm" required>
                                     <option value="">-- Pilih Satuan --</option>
                                 </select>
                             </div>
@@ -232,14 +232,14 @@ $noBeli = generateNo()
                             <div class="form-group">
                                 <label for="harga">Harga</label>
                                 <input type="number" name="harga" id="harga" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['harga_beli'] ?? '' ?>">
+                                    value="<?= $selectBrg['harga_beli'] ?? '' ?>" required>
                             </div>
                         </div>
                         <div class="col-lg-2">
                             <div class="form-group">
                                 <label for="qty">Quantity</label>
                                 <input type="number" name="qty" id="qty" class="form-control form-control-sm"
-                                    value="<?= $selectBrg ? 1 : '' ?>">
+                                    value="<?= $selectBrg ? 1 : '' ?>" required>
                             </div>
                         </div>
                         <div class=" col-lg-2">

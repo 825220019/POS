@@ -35,6 +35,10 @@ function insert($post)
     $harga_jual = is_array($post['harga_jual'])
         ? mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][0]))
         : mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
+    if ($harga_jual < $harga_beli) {
+        echo "<script>alert('Harga jual tidak boleh lebih kecil dari harga beli!');history.back();</script>";
+        exit();
+    }
     if ($harga_jual < 0) {
         echo "<script>alert('Harga jual tidak valid! Tidak boleh bernilai negatif.');history.back();</script>";
         exit();
@@ -109,6 +113,10 @@ function update($post)
     $harga_jual = is_array($post['harga_jual'])
         ? mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][0]))
         : mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual']));
+    if ($harga_jual < $harga_beli) {
+        echo "<script>alert('Harga jual tidak boleh lebih kecil dari harga beli!');history.back();</script>";
+        exit();
+    }
     if ($harga_jual < 0) {
         echo "<script>alert('Harga jual tidak valid! Tidak boleh bernilai negatif.');history.back();</script>";
         exit();

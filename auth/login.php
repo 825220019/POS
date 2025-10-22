@@ -94,7 +94,7 @@ if (isset($_POST['login'])) {
         <a href="#" class="h1"><b>CAngelline</b>POS</a>
       </div>
       <div class="card-body">
-        <p class="login-box-msg">Sign in to start your session</p>
+        <p class="login-box-msg">Log in to start your session</p>
 
         <form action="" method="post">
           <div class="input-group mb-4">
@@ -115,7 +115,7 @@ if (isset($_POST['login'])) {
           </div>
 
           <div class="mb-4">
-            <button type="submit" name="login" class="btn btn-primary btn-block">Sign In</button>
+            <button type="submit" name="login" class="btn btn-primary btn-block">Login</button>
           </div>
           <!-- /.col -->
         </form>
