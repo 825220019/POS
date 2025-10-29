@@ -76,10 +76,10 @@ function update($data)
     }
 
     mysqli_query($koneksi, "UPDATE tbl_user SET 
-        username = '$username',
-        fullname = '$fullname',
-        level = '$level'
-        WHERE userid = $iduser");
+    username = '$username',
+    fullname = '$fullname',
+    level = '$level'
+    WHERE user_id = $iduser");
 
     return mysqli_affected_rows($koneksi);
 }

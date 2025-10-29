@@ -14,7 +14,6 @@ $koneksi = mysqli_connect($host, $user, $pass, $dbname);
 // } else {
 //     echo "koneksi ke database berhasil";
 // }
-
-$main_url = "http://localhost/pos/";
-
+$host = $_SERVER['HTTP_HOST'];
+$main_url = "http://$host/pos/";
 ?>
