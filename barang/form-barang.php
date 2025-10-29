@@ -174,16 +174,35 @@ if (isset($_POST['simpan'])) {
     const hargaBeliInput = document.querySelector("input[name='harga_beli']");
 
     function validasiHargaJual(input) {
-      const hargaBeli = parseFloat(hargaBeliInput.value.replace(/\D/g, "")) || 0;
-      const hargaJual = parseFloat(input.value.replace(/\D/g, "")) || 0;
-      if (hargaJual > 0 && hargaJual < hargaBeli) {
-        alert("⚠️ Harga jual tidak boleh lebih kecil dari harga beli!");
-        input.value = ""; // kosongkan kolom biar user isi ulang
-        input.focus();
-        return false;
-      }
-      return true;
+  const hargaBeli = parseFloat(hargaBeliInput.value.replace(/\D/g, "")) || 0;
+  const hargaJual = parseFloat(input.value.replace(/\D/g, "")) || 0;
+
+  // Ambil semua input harga_jual (array)
+  const allHargaJualInputs = [...document.querySelectorAll(".harga_jual")];
+  const index = allHargaJualInputs.indexOf(input);
+
+  // Ambil placeholder acuan (dari hasil perhitungan sebelumnya)
+  const placeholderValue = parseFloat(input.placeholder.replace(/\D/g, "")) || 0;
+
+  // 🔹 Baris pertama tetap dibandingkan ke harga beli
+  if (index === 0) {
+    if (hargaJual > 0 && hargaJual < hargaBeli) {
+      alert("⚠️ Harga jual utama tidak boleh lebih kecil dari harga beli!");
+      input.value = "";
+      input.focus();
+      return false;
     }
+  } else {
+    // 🔹 Baris kedua dan seterusnya → bandingkan dengan placeholder hasil hitungan
+    if (hargaJual > 0 && hargaJual < placeholderValue) {
+      alert("⚠️ Harga jual tidak boleh lebih kecil dari harga acuan!");
+      input.value = "";
+      input.focus();
+      return false;
+    }
+  }
+  return true;
+}
 
     // cek setiap kali user keluar dari kolom harga jual
     document.querySelectorAll(".harga_jual").forEach(input => {
@@ -441,4 +460,4 @@ if (isset($_POST['simpan'])) {
     </div>
   </section>
 </div>
-<?php require "../template/footer.php"; ?>
+<?php require "../template/footer.php"; ?> 

@@ -190,7 +190,7 @@ VALUES
     WHERE s.id_satuan = '$idSatuan'
 ");
         $barang = mysqli_fetch_assoc($qBarang);
-        $idVarian = $barang['id_varian'] ?? 'NULL';
+        $idVarian = isset($barang['id_varian']) ? $barang['id_varian'] : 'NULL';
         $idBarang = $barang['id_barang'];
         $faktor = (int) ($barang['faktor_konversi'] ?? 1);
         $qtyDasar = $qty * $faktor;
@@ -205,10 +205,11 @@ VALUES
         $namaBarang = $dNama['nama_barang'] ?? '';
 
         $insertDetail = mysqli_query($koneksi, "
-     INSERT INTO tbl_jual_detail 
+INSERT INTO tbl_jual_detail 
 (no_jual, tgl_jual, id_barang, id_varian, nama_brg, qty, harga_jual, jml_harga, id_satuan)
 VALUES 
-('$nojual', '$tgl', '$idBarang', '$idVarian', '$namaBarang', $qty, $harga, $subtotal, '$idSatuan')");
+('$nojual', '$tgl', '$idBarang', " . ($idVarian === 'NULL' ? "NULL" : "'$idVarian'") . ", '$namaBarang', $qty, $harga, $subtotal, '$idSatuan')
+");
     }
 
 

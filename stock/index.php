@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 if (!isset($_SESSION["ssLoginPOS"])) {
     header("location: ../auth/login.php");
     exit();
@@ -15,22 +14,27 @@ require "../template/header.php";
 require "../template/navbar.php";
 require "../template/sidebar.php";
 
+// Ambil semua data barang
 $stockBrg = getData("
     SELECT 
         b.id_barang,
         b.nama_barang,
+        b.satuan_dasar,
         b.satuan_tertinggi,
         b.stok,
-        b.stock_minimal,
-        COALESCE(k.jumlah_isi, 1) AS jumlah_isi
+        b.stock_minimal
     FROM tbl_barang b
-    LEFT JOIN tbl_satuan k 
-        ON k.id_barang = b.id_barang 
-        AND k.satuan = b.satuan_tertinggi
-    GROUP BY b.id_barang, b.nama_barang, b.satuan_tertinggi, b.stok, b.stock_minimal, k.jumlah_isi
 ");
-?>
 
+// Buat array konversi satuan
+$konversi = getData("SELECT id_barang, satuan, jumlah_isi FROM tbl_satuan");
+
+$konversiMap = [];
+foreach ($konversi as $k) {
+    $konversiMap[$k['id_barang']][$k['satuan']] = $k['jumlah_isi'];
+}
+
+?>
 <div class="content-wrapper">
     <div class="content-header">
         <div class="container-fluid">
@@ -57,6 +61,7 @@ $stockBrg = getData("
                         <i class="fas fa-print"></i> Cetak
                     </a>
                 </div>
+
                 <div class="card-body table-responsive p-3">
                     <table class="table table-hover text-nowrap" id="tblData">
                         <thead>
@@ -71,22 +76,33 @@ $stockBrg = getData("
                             </tr>
                         </thead>
                         <tbody>
-                            <?php $no = 1;
-                            foreach ($stockBrg as $stock) { ?>
+                            <?php 
+                            $no = 1;
+                            foreach ($stockBrg as $stock) { 
+                                $id = $stock['id_barang'];
+                                $stokDasar = $stock['stok'];
+
+                                // cari faktor konversi total
+                                $faktor = 1;
+                                if (isset($konversiMap[$id])) {
+                                    foreach ($konversiMap[$id] as $satuan => $jumlah_isi) {
+                                        $faktor *= $jumlah_isi;
+                                    }
+                                }
+
+                                $stokTertinggi = $stokDasar / $faktor;
+                                $status = ($stokTertinggi < $stock['stock_minimal'])
+                                    ? '<span class="text-danger">Stok Kurang</span>'
+                                    : '<span class="text-success">Stok Aman</span>';
+                            ?>
                                 <tr>
                                     <td><?= $no++ ?></td>
                                     <td><?= $stock['id_barang']; ?></td>
                                     <td><?= $stock['nama_barang']; ?></td>
-                                    <td><?= $stock['satuan_tertinggi'] ?: $stock['satuan_tertinggi']; ?></td>
-                                    <td class="text-center"><?= round($stock['stok'] / $stock['jumlah_isi'], 2); ?></td>
+                                    <td><?= $stock['satuan_tertinggi']; ?></td>
+                                    <td class="text-center"><?= round($stokTertinggi, 2); ?></td>
                                     <td class="text-center"><?= $stock['stock_minimal']; ?></td>
-                                    <td>
-                                        <?php if ($stock['stok'] / $stock['jumlah_isi'] < $stock['stock_minimal']) {
-                                            echo '<span class="text-danger">Stok Kurang</span>';
-                                        } else {
-                                            echo '<span class="text-success">Stok Aman</span>';
-                                        } ?>
-                                    </td>
+                                    <td><?= $status ?></td>
                                 </tr>
                             <?php } ?>
                         </tbody>
