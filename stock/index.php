@@ -33,8 +33,8 @@ $konversiMap = [];
 foreach ($konversi as $k) {
     $konversiMap[$k['id_barang']][$k['satuan']] = $k['jumlah_isi'];
 }
-
 ?>
+
 <div class="content-wrapper">
     <div class="content-header">
         <div class="container-fluid">
@@ -51,17 +51,16 @@ foreach ($konversi as $k) {
             </div>
         </div>
     </div>
-
     <section class="content">
         <div class="container-fluid">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-list fa-sm"></i> Stock</h3>
-                    <a href="<?= $main_url ?>report/r-stock.php" class="btn btn-sm btn-outline-primary float-right" target="_blank">
+                    <a href="<?= $main_url ?>report/r-stock.php" class="btn btn-sm btn-outline-primary float-right"
+                        target="_blank">
                         <i class="fas fa-print"></i> Cetak
                     </a>
                 </div>
-
                 <div class="card-body table-responsive p-3">
                     <table class="table table-hover text-nowrap" id="tblData">
                         <thead>
@@ -76,9 +75,9 @@ foreach ($konversi as $k) {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php 
+                            <?php
                             $no = 1;
-                            foreach ($stockBrg as $stock) { 
+                            foreach ($stockBrg as $stock) {
                                 $id = $stock['id_barang'];
                                 $stokDasar = $stock['stok'];
 
@@ -94,13 +93,13 @@ foreach ($konversi as $k) {
                                 $status = ($stokTertinggi < $stock['stock_minimal'])
                                     ? '<span class="text-danger">Stok Kurang</span>'
                                     : '<span class="text-success">Stok Aman</span>';
-                            ?>
+                                ?>
                                 <tr>
                                     <td><?= $no++ ?></td>
                                     <td><?= $stock['id_barang']; ?></td>
                                     <td><?= $stock['nama_barang']; ?></td>
                                     <td><?= $stock['satuan_tertinggi']; ?></td>
-                                    <td class="text-center"><?= round($stokTertinggi, 2); ?></td>
+                                    <td class="text-center"><?= floor($stokTertinggi); ?></td>
                                     <td class="text-center"><?= $stock['stock_minimal']; ?></td>
                                     <td><?= $status ?></td>
                                 </tr>
@@ -112,5 +111,4 @@ foreach ($konversi as $k) {
         </div>
     </section>
 </div>
-
 <?php require "../template/footer.php"; ?>

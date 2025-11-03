@@ -2,7 +2,7 @@
 
 session_start();
 
-if (!isset($_SESSION["ssLoginPOS"])){
+if (!isset($_SESSION["ssLoginPOS"])) {
     header("location: auth/login.php");
     exit();
 }
@@ -26,7 +26,6 @@ if (isset($_POST['simpan'])) {
                   <h5><i class="icon fas fa-check"></i> Alert!</h5>
                   Supplier berhasil ditambahkan.
                 </div>';
-
     }
 }
 ?>
@@ -57,36 +56,38 @@ if (isset($_POST['simpan'])) {
         <div class="container-fluid">
             <div class="card">
                 <form action="" method="post" enctype="multipart/form-data">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-plus fa-sm" ></i> Add Supplier</h3>
-                    <button type="submit" name="simpan" class="btn btn-primary btn-sm float-right"><i class="fas fa-save"></i> Simpan</button>
-                    <button type="reset" name="reset" class="btn btn-danger btn-sm float-right mr-1"><i
-                            class="fas fa-times"></i> Reset</button>
-                </div>
-                <div class="card-body">
-                    <?php if ($alert != ''){
-                            echo $alert;
-                        }?>
-                    <div class="row">
-                        <div class="col-lg-8 mb-3">
-                            <div class="form-group">
-                                <label for="name">Nama</label>
-                                <input type="text" class="form-control" id="nama" name="nama"
-                                    placeholder="nama supplier" autofocus autocomplete="off" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="telpon">Telepon</label>
-                                <input type="text" class="form-control" id="telpon" name="telpon"
-                                placeholder="no telepon supplier" pattern="[0-9]{5,}" title="minimal 5 angka" required> 
-                            </div>
-                            <div class="form-group">
-                                <label for="ketr">Deskripsi</label>
-                                <textarea class="form-control" id="ketr" name="ketr" rows="1"
-                                    placeholder="keterangan supplier" required></textarea>
-                        </div>
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-plus fa-sm"></i> Add Supplier</h3>
+                        <button type="submit" name="simpan" class="btn btn-primary btn-sm float-right"><i
+                                class="fas fa-save"></i> Simpan</button>
+                        <button type="reset" name="reset" class="btn btn-danger btn-sm float-right mr-1"><i
+                                class="fas fa-times"></i> Reset</button>
                     </div>
-                    <div class="col-lg-4 mb-3"></div>
-                </div>
+                    <div class="card-body">
+                        <?php if ($alert != '') {
+                            echo $alert;
+                        } ?>
+                        <div class="row">
+                            <div class="col-lg-8 mb-3">
+                                <div class="form-group">
+                                    <label for="name">Nama</label>
+                                    <input type="text" class="form-control" id="nama" name="nama"
+                                        placeholder="nama supplier" autofocus autocomplete="off" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telpon">Telepon</label>
+                                    <input type="text" class="form-control" id="telpon" name="telpon"
+                                        placeholder="no telepon supplier" pattern="[0-9]{5,}" title="minimal 5 angka"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ketr">Deskripsi</label>
+                                    <textarea class="form-control" id="ketr" name="ketr" rows="1"
+                                        placeholder="keterangan supplier" required></textarea>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 mb-3"></div>
+                        </div>
                 </form>
             </div>
         </div>

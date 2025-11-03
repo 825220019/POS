@@ -1,12 +1,10 @@
 <?php
 
 session_start();
-
 if (!isset($_SESSION["ssLoginPOS"])) {
   header("location: ../auth/login.php");
   exit();
 }
-
 
 require "../config/config.php";
 require "../config/functions.php";
@@ -26,11 +24,11 @@ if (isset($_GET['msg'])) {
 $alert = '';
 //jalankan fungsi hapus barang
 if ($msg == 'deleted') {
-    // jangan cast ke int kalau id_barang bertipe string seperti "BRG-001"
-    $id = isset($_GET['id']) ? $_GET['id'] : '';
-    if ($id !== '') {
-        delete($id);
-        $alert = "<script>
+  // jangan cast ke int kalau id_barang bertipe string seperti "BRG-001"
+  $id = isset($_GET['id']) ? $_GET['id'] : '';
+  if ($id !== '') {
+    delete($id);
+    $alert = "<script>
         $(document).ready(function(){
           $(document).Toasts('create', {
             class: 'bg-success', 
@@ -40,7 +38,7 @@ if ($msg == 'deleted') {
           })
         });
       </script>";
-    }
+  }
 }
 
 
@@ -107,15 +105,14 @@ if ($msg == 'updated') {
             <tbody>
               <?php
               $barang = getData("
-      SELECT 
-          b.id_barang,
-          b.nama_barang,
-          b.harga_beli,
-          b.harga_jual
-      FROM tbl_barang b
-      ORDER BY b.id_barang
-  ");
-
+                                  SELECT 
+                                      b.id_barang,
+                                      b.nama_barang,
+                                      b.harga_beli,
+                                      b.harga_jual
+                                  FROM tbl_barang b
+                                  ORDER BY b.id_barang
+                              ");
               foreach ($barang as $brg): ?>
                 <tr>
                   <td><?= $brg['id_barang']; ?></td>
@@ -135,26 +132,26 @@ if ($msg == 'updated') {
                 </tr>
               <?php endforeach; ?>
             </tbody>
-
           </table>
+        </div>
+      </div>
+    </div>
   </section>
-
-  <script>
-document.querySelector("form").addEventListener("submit", function(e) {
-  const satuanInputs = document.querySelectorAll('input[name="satuan[]"]');
-  if (satuanInputs.length > 0) {
-    const lastSatuan = satuanInputs[satuanInputs.length - 1].value;
-    const satuanDasarInput = document.createElement("input");
-    satuanDasarInput.type = "hidden";
-    satuanDasarInput.name = "satuan_dasar";
-    satuanDasarInput.value = lastSatuan;
-    this.appendChild(satuanDasarInput);
-  }
-});
-</script>
-
-
 </div>
+
+<script>
+  document.querySelector("form").addEventListener("submit", function (e) {
+    const satuanInputs = document.querySelectorAll('input[name="satuan[]"]');
+    if (satuanInputs.length > 0) {
+      const lastSatuan = satuanInputs[satuanInputs.length - 1].value;
+      const satuanDasarInput = document.createElement("input");
+      satuanDasarInput.type = "hidden";
+      satuanDasarInput.name = "satuan_dasar";
+      satuanDasarInput.value = lastSatuan;
+      this.appendChild(satuanDasarInput);
+    }
+  });
+</script>
 <?php
 require "../template/footer.php";
 ?>

@@ -4,6 +4,7 @@ if (userLogin()['level'] == 'kasir') {
     exit();
 }
 
+//membuat id barang baru
 function generateId()
 {
     global $koneksi;
@@ -30,7 +31,6 @@ function insert($post)
         exit();
     }
 
-
     // ambil harga jual utama dari baris pertama
     $harga_jual = is_array($post['harga_jual'])
         ? mysqli_real_escape_string($koneksi, str_replace('.', '', $post['harga_jual'][0]))
@@ -45,7 +45,6 @@ function insert($post)
     }
 
     // ambil satuan terakhir (dasar)
-    // Ambil satuan dari form
     $satuans = array_filter($post['satuan']);
     $satuan_tertinggi = mysqli_real_escape_string($koneksi, $satuans[0]); // baris pertama
     $satuan_dasar = mysqli_real_escape_string($koneksi, end($satuans)); // baris terakhir

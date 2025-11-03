@@ -7,7 +7,6 @@ if (!isset($_SESSION["ssLoginPOS"])) {
     exit();
 }
 
-
 require "../config/config.php";
 require "../config/functions.php";
 require "../module/mode-barang.php";
@@ -124,13 +123,12 @@ $penjualan = getData("
     let tgl2 = document.getElementById('tgl2');
 
     function printDoc() {
-    if (tgl1.value !== "" && tgl2.value !== "") {
-        window.open("../report/r-jual.php?tgl1=" + tgl1.value + "&tgl2=" + tgl2.value, "_blank");
-    } else {
-        alert('Tanggal Awal dan Tanggal Akhir harus diisi!');
+        if (tgl1.value !== "" && tgl2.value !== "") {
+            window.open("../report/r-jual.php?tgl1=" + tgl1.value + "&tgl2=" + tgl2.value, "_blank");
+        } else {
+            alert('Tanggal Awal dan Tanggal Akhir harus diisi!');
+        }
     }
-}
-
 </script>
 <?php
 require "../template/footer.php";

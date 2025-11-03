@@ -40,7 +40,7 @@ function insertPembelian($data) {
     $harga    = (int) $data['harga'];
     $subtotal = $qty * $harga;
 
-    // ✅ Pastikan header pembelian ada
+    // Cek no pembelian
     $cekHead = mysqli_query($koneksi, "SELECT no_beli FROM tbl_beli_head WHERE no_beli='$nobeli'");
     if (mysqli_num_rows($cekHead) == 0) {
         mysqli_query($koneksi, "
@@ -49,13 +49,13 @@ function insertPembelian($data) {
         ");
     }
 
-    // ✅ Simpan detail pembelian
+    // Simpan detail pembelian
     mysqli_query($koneksi, "
         INSERT INTO tbl_beli_detail (no_beli, id_satuan, qty, harga, subtotal)
         VALUES ('$nobeli', '$idSatuan', '$qty', '$harga', '$subtotal')
     ");
 
-    // ✅ Ambil informasi satuan & barang
+    // Ambil informasi satuan & barang
     $qSatuan = mysqli_query($koneksi, "
         SELECT s.id_barang, s.satuan, s.jumlah_isi, b.satuan_dasar
         FROM tbl_satuan s
@@ -69,7 +69,7 @@ function insertPembelian($data) {
     $satuanBeli = strtolower($rowSatuan['satuan']);
     $satuanDasar = strtolower($rowSatuan['satuan_dasar']);
 
-    // ✅ Ambil semua level satuan untuk barang ini
+    // Ambil semua level satuan untuk barang ini
     $qLevels = mysqli_query($koneksi, "
         SELECT satuan, jumlah_isi
         FROM tbl_satuan
@@ -83,14 +83,14 @@ function insertPembelian($data) {
         $levels[strtolower($r['satuan'])] = (int)$r['jumlah_isi'];
     }
 
-    // ✅ Hitung faktor konversi dari satuan beli ke satuan dasar
+    // Hitung faktor konversi dari satuan beli ke satuan dasar
     $jumlahTambah = $qty; // default jika beli dalam satuan dasar
 
     if ($satuanBeli !== $satuanDasar) {
         $totalFaktor = 1;
         $found = false;
 
-        // Kita iterasi dari atas (level terbesar) ke bawah (dasar)
+        // Dari atas (level terbesar) ke bawah (dasar)
         $urutan = array_keys($levels);
 
         // Cari semua faktor hingga ketemu satuan beli
@@ -108,7 +108,7 @@ function insertPembelian($data) {
         }
     }
 
-    // ✅ Update stok di tbl_barang
+    // Update stok di tbl_barang
     mysqli_query($koneksi, "
         UPDATE tbl_barang
         SET stok = stok + $jumlahTambah, harga_beli = '$harga'
@@ -132,10 +132,7 @@ function simpanTotalPembelian($noBeli) {
     return $total;
 }
 
-
-/**
- * Hapus detail pembelian
- */
+// Hapus detail pembelian
 function delete($idSatuan, $idbeli, $qty)
 {
     global $koneksi;

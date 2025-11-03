@@ -10,7 +10,7 @@ function insert($data){
     $nama   = mysqli_real_escape_string($koneksi,$data['nama']);
     $telpon = mysqli_real_escape_string ($koneksi,$data['telpon']);
     $deskripsi = mysqli_real_escape_string ($koneksi,$data['ketr']);
-
+    
     $sqlPelanggan = "INSERT INTO tbl_pelanggan VALUES (null, '$nama', '$telpon', '$deskripsi')";
 
     mysqli_query($koneksi, $sqlPelanggan);

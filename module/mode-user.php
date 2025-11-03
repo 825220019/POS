@@ -83,10 +83,4 @@ function update($data)
 
     return mysqli_affected_rows($koneksi);
 }
-
-function selectUser($level, $value){
-    return ($level == $value) ? "selected" : "";
-}
-
-
 ?>

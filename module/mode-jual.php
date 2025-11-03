@@ -12,21 +12,6 @@ function generateNo()
     return $newNo;
 }
 
-
-function getBarangDetailBySatuan($id_satuan)
-{
-    global $koneksi;
-
-    $query = "SELECT b.*, s.satuan, s.harga_jual, s.jumlah_isi, v.nama_varian, v.id_varian
-          FROM tbl_satuan s
-          JOIN tbl_barang b ON s.id_barang = b.id_barang
-          LEFT JOIN tbl_varian v ON s.id_varian = v.id_varian
-          WHERE s.id_satuan = '$id_satuan'";
-
-    $result = mysqli_query($koneksi, $query);
-    return mysqli_fetch_assoc($result);
-}
-
 function getSatuanByBarang($id_barang)
 {
     $query = "SELECT s.id_satuan, s.satuan, s.harga_jual, s.jumlah_isi, v.nama_varian, b.stok
@@ -53,17 +38,6 @@ if (isset($_GET['pilihbrg'])) {
     $satuanList = getSatuanByBarang($id_barang);
 }
 
-function totalJual($noJual)
-{
-    global $koneksi;
-    $totalJual = mysqli_query($koneksi, "SELECT SUM(subtotal) AS total FROM tbl_jual_detail WHERE no_jual = '$noJual'");
-    $data = mysqli_fetch_assoc($totalJual);
-    return $data["total"];
-}
-
-/**
- * Tambah detail penjualan
- */
 function insert($data)
 {
     global $koneksi;
@@ -80,7 +54,7 @@ function insert($data)
         return false;
     }
 
-    // ✅ Cek stok barang di tabel satuan
+    // Cek stok barang di tabel satuan
     $stokQuery = mysqli_query($koneksi, "SELECT stock FROM tbl_satuan WHERE id_satuan='$idSatuan'");
     $stokData = mysqli_fetch_assoc($stokQuery);
     $stok = (int) $stokData['stock'];
@@ -90,14 +64,14 @@ function insert($data)
         return false;
     }
 
-    // ✅ Pastikan header penjualan ada
+    // Pastikan header penjualan ada
     $cekHead = mysqli_query($koneksi, "SELECT no_jual FROM tbl_jual_head WHERE no_jual='$nojual'");
     if (mysqli_num_rows($cekHead) == 0) {
         mysqli_query($koneksi, "INSERT INTO tbl_jual_head (no_jual, tgl_jual, id_pelanggan, total, created_at) 
                                 VALUES ('$nojual', CURDATE(), '$idPelanggan', 0, NOW())");
     }
 
-    // ✅ Cek apakah barang sudah pernah diinput untuk penjualan yang sama
+    // Cek apakah barang sudah pernah diinput untuk penjualan yang sama
     $cekBrg = mysqli_query($koneksi, "SELECT * FROM tbl_jual_detail 
                                       WHERE no_jual='$nojual' AND id_satuan='$idSatuan'");
     if (mysqli_num_rows($cekBrg) > 0) {
@@ -105,7 +79,7 @@ function insert($data)
         return false;
     }
 
-    // ✅ Jika belum ada, lakukan insert baru
+    // Jika belum ada, lakukan insert baru
     $sql = "INSERT INTO tbl_jual_detail (no_jual, id_satuan, qty, harga, subtotal) 
             VALUES ('$nojual', '$idSatuan', $qty, $harga, $jmlHarga)";
     if (!mysqli_query($koneksi, $sql)) {
@@ -131,9 +105,6 @@ function insert($data)
     return true;
 }
 
-/**
- * Hapus detail penjualan
- */
 function delete($idSatuan, $noJual, $qty)
 {
     global $koneksi;
@@ -168,64 +139,3 @@ function delete($idSatuan, $noJual, $qty)
 }
 
 
-function insertJual($data)
-{
-    global $koneksi;
-
-    $no_jual = mysqli_real_escape_string($koneksi, $data['no_jual']);
-    $tgl_jual = mysqli_real_escape_string($koneksi, $data['tgl_jual']);
-    $pelanggan = mysqli_real_escape_string($koneksi, $data['pelanggan']);
-    $total = floatval($data['total']);
-    $jml_bayar = floatval($data['jml_bayar']);
-
-    // Hitung hutang dan kembalian
-    if ($jml_bayar == 0) {
-        $hutang = $total;
-        $kembalian = 0;
-    } elseif ($jml_bayar < $total) {
-        $hutang = $total - $jml_bayar;
-        $kembalian = 0;
-    } elseif ($jml_bayar == $total) {
-        $hutang = 0;
-        $kembalian = 0;
-    } else { // bayar lebih
-        $hutang = 0;
-        $kembalian = $jml_bayar - $total;
-    }
-
-    $sql = "INSERT INTO tbl_jual_head (no_jual, tgl_jual, pelanggan, total, hutang, jml_bayar, kembalian)
-            VALUES ('$no_jual', '$tgl_jual', '$pelanggan', '$total', '$hutang', '$jml_bayar', '$kembalian')";
-
-    return mysqli_query($koneksi, $sql);
-}
-
-
-function updateJual($data)
-{
-    global $koneksi;
-
-    $no_jual = mysqli_real_escape_string($koneksi, $data['no_jual']);
-    $total = floatval($data['total']);
-    $jml_bayar = floatval($data['jml_bayar']);
-
-    if ($jml_bayar == 0) {
-        $hutang = $total;
-        $kembalian = 0;
-    } elseif ($jml_bayar < $total) {
-        $hutang = $total - $jml_bayar;
-        $kembalian = 0;
-    } elseif ($jml_bayar == $total) {
-        $hutang = 0;
-        $kembalian = 0;
-    } else {
-        $hutang = 0;
-        $kembalian = $jml_bayar - $total;
-    }
-
-    $sql = "UPDATE tbl_jual_head 
-            SET total='$total', hutang='$hutang', jml_bayar='$jml_bayar', kembalian='$kembalian'
-            WHERE no_jual='$no_jual'";
-
-    return mysqli_query($koneksi, $sql);
-}
-?>

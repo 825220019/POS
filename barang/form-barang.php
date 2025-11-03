@@ -91,9 +91,7 @@ if (isset($_POST['simpan'])) {
     </div>';
     }
   }
-
 }
-
 ?>
 
 <script>
@@ -101,7 +99,7 @@ if (isset($_POST['simpan'])) {
     const jumlahInputs = document.querySelectorAll("input[name='jumlah[]']");
     const beliInput = document.querySelector("input[name='harga_beli']"); // harga beli utama
     const jualInputs = document.querySelectorAll("input[name='harga_jual[]']"); // kolom bawah (array)
-    const hargaJualUtama = document.querySelector("input[name='harga_jual']");   // kolom kiri atas (single)
+    const hargaJualUtama = document.querySelector("input[name='harga_jual']"); // harga jual utama
 
     const formatter = new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -113,14 +111,14 @@ if (isset($_POST['simpan'])) {
       const hargaBeli = parseFloat(beliInput.value.replace(/\D/g, "")) || 0;
       const hargaJualAtas = parseFloat(hargaJualUtama.value.replace(/\D/g, "")) || 0;
 
-      // 🔹 Baris pertama = harga jual utama
+      // Baris pertama = harga jual utama
       if (jualInputs[0]) {
         jualInputs[0].placeholder = hargaJualAtas > 0
           ? formatter.format(Math.round(hargaJualAtas))
           : "Rp 0";
       }
 
-      // 🔹 Baris kedua = harga beli ÷ jumlah isi baris pertama
+      // Baris kedua = harga beli ÷ jumlah isi baris pertama
       let hargaBaris2 = 0;
       if (jualInputs[1]) {
         const qtyPertama = parseFloat(jumlahInputs[0].value) || 0;
@@ -133,7 +131,7 @@ if (isset($_POST['simpan'])) {
         }
       }
 
-      // 🔹 Baris ketiga = harga baris kedua ÷ jumlah isi baris kedua
+      // Baris ketiga = harga baris kedua ÷ jumlah isi baris kedua
       if (jualInputs[2]) {
         const qtyKedua = parseFloat(jumlahInputs[1].value) || 0;
         if (hargaBaris2 > 0 && qtyKedua > 0) {
@@ -144,7 +142,7 @@ if (isset($_POST['simpan'])) {
         }
       }
 
-      // 🔹 Baris ke-4 dst tetap placeholder 0
+      // Baris ke-4 dst tetap placeholder 0
       for (let i = 3; i < jualInputs.length; i++) {
         jualInputs[i].placeholder = "Rp 0";
       }
@@ -184,10 +182,10 @@ if (isset($_POST['simpan'])) {
   // Ambil placeholder acuan (dari hasil perhitungan sebelumnya)
   const placeholderValue = parseFloat(input.placeholder.replace(/\D/g, "")) || 0;
 
-  // 🔹 Baris pertama tetap dibandingkan ke harga beli
+  // Baris pertama tetap dibandingkan ke harga beli
   if (index === 0) {
     if (hargaJual > 0 && hargaJual < hargaBeli) {
-      alert("⚠️ Harga jual utama tidak boleh lebih kecil dari harga beli!");
+      alert("Harga jual utama tidak boleh lebih kecil dari harga beli!");
       input.value = "";
       input.focus();
       return false;
@@ -195,7 +193,7 @@ if (isset($_POST['simpan'])) {
   } else {
     // 🔹 Baris kedua dan seterusnya → bandingkan dengan placeholder hasil hitungan
     if (hargaJual > 0 && hargaJual < placeholderValue) {
-      alert("⚠️ Harga jual tidak boleh lebih kecil dari harga acuan!");
+      alert("Harga jual tidak boleh lebih kecil dari harga acuan!");
       input.value = "";
       input.focus();
       return false;
@@ -222,7 +220,7 @@ if (isset($_POST['simpan'])) {
   });
 
 
-  // 🔸 Cek input harga beli & harga jual agar tidak negatif
+  // Cek input harga beli & harga jual agar tidak negatif
   document.querySelector("form").addEventListener("submit", function (e) {
     const hargaBeliInput = document.querySelector("input[name='harga_beli']");
     const hargaJualInputs = document.querySelectorAll("input[name='harga_jual'], input[name='harga_jual[]']");
@@ -245,7 +243,7 @@ if (isset($_POST['simpan'])) {
     }
   });
 
-  // 🔸 Cek harga jual tidak boleh lebih kecil dari harga beli
+  // Cek harga jual tidak boleh lebih kecil dari harga beli
   document.querySelector("form").addEventListener("submit", function (e) {
     const hargaBeliInput = document.querySelector("input[name='harga_beli']");
     const hargaJualUtamaInput = document.querySelector("input[name='harga_jual']");
@@ -276,8 +274,6 @@ if (isset($_POST['simpan'])) {
       }
     }
   });
-
-
 </script>
 
 <!-- Content Wrapper. Contains page content -->
@@ -333,7 +329,6 @@ if (isset($_POST['simpan'])) {
 
                   </div>
                 </div>
-
                 <div class="form-group row mb-2">
                   <label for="nama" class="col-sm-3 col-form-label">Nama</label>
                   <div class="col-sm-9">
@@ -342,7 +337,6 @@ if (isset($_POST['simpan'])) {
                       autocomplete="off" autofocus required>
                   </div>
                 </div>
-
                 <div class="form-group row mb-2"> <label for="stock_minimal" class="col-sm-3 col-form-label">Stock
                     Minimal</label>
                   <div class="col-sm-9">
@@ -363,7 +357,7 @@ if (isset($_POST['simpan'])) {
                   <div class="col-sm-9">
                     <input type="text" class="form-control" id="harga_jual" name="harga_jual"
                       value="<?= $msg != '' ? number_format($barang['harga_jual'], 0, ',', '.') : null ?>"
-                      placeholder="Rp 0">
+                      placeholder="Rp 0" required>
                   </div>
                 </div>
                 <div class="form-group row mb-2">
@@ -381,7 +375,6 @@ if (isset($_POST['simpan'])) {
                     </select>
                   </div>
                 </div>
-
               </div>
             </div>
 
@@ -430,10 +423,8 @@ if (isset($_POST['simpan'])) {
               <label for="satuan">Satuan</label>
               <input type="text" class="form-control" name="satuan[]" placeholder="satuan brg 1 (Dus)"
                 value="<?= isset($satuanValues[0]['satuan']) ? $satuanValues[0]['satuan'] : '' ?>" required>
-
               <input type="text" class="form-control mt-2" name="satuan[]" placeholder="satuan brg 2 (Pak)"
                 value="<?= isset($satuanValues[1]['satuan']) ? $satuanValues[1]['satuan'] : '' ?>">
-
               <input type="text" class="form-control mt-2" name="satuan[]" placeholder="satuan brg 3 (Bks)"
                 value="<?= isset($satuanValues[2]['satuan']) ? $satuanValues[2]['satuan'] : '' ?>">
             </div>

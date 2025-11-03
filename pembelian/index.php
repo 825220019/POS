@@ -1,7 +1,6 @@
 <?php
 
 session_start();
-
 if (!isset($_SESSION["ssLoginPOS"])) {
     header("location: ../auth/login.php");
     exit();
@@ -26,13 +25,11 @@ if (isset($_GET['msg'])) {
 if (isset($_GET['hapus'])) {
     $key = $_GET['hapus'];
     unset($_SESSION['cart'][$key]);
-    // reindex array biar rapih
     $_SESSION['cart'] = array_values($_SESSION['cart']);
 
     $tgl = $_POST['tglNota'];
     $supplier = $_POST['supplier'];
     echo "<script>document.location='?tgl=$tgl&supplier=$supplier'</script>";
-
 }
 
 
@@ -118,7 +115,6 @@ if (isset($_POST['simpan'])) {
 
 
 $noBeli = generateNo()
-
     ?>
 
 <!-- Content Wrapper. Contains page content -->
@@ -140,7 +136,6 @@ $noBeli = generateNo()
             </div><!-- /.row -->
         </div><!-- /.container-fluid -->
     </div>
-
     <section>
         <div class="container-fluid">
             <form action="" method="post">
@@ -174,19 +169,19 @@ $noBeli = generateNo()
                             <div class="form-group row mb-2">
                                 <label for="supplier" class="col-sm-2 col-form-label">Supplier</label>
                                 <div class="col-sm-10">
-                                    <select name="supplier" id="supplier" class="form-control form-control-sm js-example-basic-single" required>
+                                    <select name="supplier" id="supplier" class="form-control form-control-sm" required>
                                         <option value="">-- Pilih Supplier --</option>
                                         <?php
-                                        $suppliers = mysqli_query($koneksi, "SELECT * FROM tbl_supplier");
+                                        $suppliers = mysqli_query($koneksi, "SELECT * FROM tbl_supplier ORDER BY nama ASC");
                                         while ($s = mysqli_fetch_assoc($suppliers)) {
                                             $selected = (isset($_GET['supplier']) && $_GET['supplier'] == $s['id_supplier']) ? 'selected' : '';
                                             echo "<option value='{$s['id_supplier']}' $selected>
-                    {$s['nama']} | {$s['deskripsi']}
-                </option>";
+                                                    {$s['nama']} | {$s['deskripsi']}
+                                                </option>";
                                         }
                                         ?>
                                     </select>
-                                </div> 
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,20 +199,20 @@ $noBeli = generateNo()
                     <div class="row">
                         <div class="col-lg-4">
                             <div class="form-group">
-                                <input type="hidden" name="kodeBrg" id="kodeBrg">
                                 <label for="namaBrg">Nama Barang</label>
-                                <input list="listBarang" name="namaBrg" class="form-control form-control-sm"
-                                    id="namaBrg">
-                                <datalist id="listBarang">
+                                <select name="namaBrg" id="namaBrg" class="form-control form-control-sm">
+                                    <option value="">-- Pilih Barang --</option>
                                     <?php
-                                    foreach ($barangList as $b) {
-                                        echo "<option value='{$b['nama_barang']}' 
-                    data-id='{$b['id_barang']}' 
-                    data-harga='{$b['harga_beli']}' 
-                    data-stock='{$b['stock_minimal']}'>";
+                                    $barangQ = mysqli_query($koneksi, "SELECT * FROM tbl_barang ORDER BY nama_barang ASC");
+                                    while ($b = mysqli_fetch_assoc($barangQ)) {
+                                        echo "<option value='{$b['id_barang']}' 
+                                                data-harga='{$b['harga_beli']}'
+                                                data-stock='{$b['stok']}'>
+                                                {$b['nama_barang']}
+                                            </option>";
                                     }
                                     ?>
-                                </datalist>
+                                </select>
                             </div>
                         </div>
                         <div class="col-lg-2">
@@ -232,14 +227,14 @@ $noBeli = generateNo()
                             <div class="form-group">
                                 <label for="harga">Harga</label>
                                 <input type="number" name="harga" id="harga" class="form-control form-control-sm"
-                                    value="<?= $selectBrg['harga_beli'] ?? '' ?>" >
+                                    value="<?= $selectBrg['harga_beli'] ?? '' ?>">
                             </div>
                         </div>
                         <div class="col-lg-2">
                             <div class="form-group">
                                 <label for="qty">Quantity</label>
                                 <input type="number" name="qty" id="qty" class="form-control form-control-sm"
-                                    value="<?= $selectBrg ? 1 : '' ?>" >
+                                    value="<?= $selectBrg ? 1 : '' ?>">
                             </div>
                         </div>
                         <div class=" col-lg-2">
@@ -251,7 +246,8 @@ $noBeli = generateNo()
                         </div>
                     </div>
                     <button type="submit" class="btn btn-sm btn-info btn-block" name="addbrg"><i
-                            class="fas fa-cart-plus fa-sm"></i> Tambah Barang</button>
+                            class="fas fa-cart-plus fa-sm"></i> Tambah Barang
+                    </button>
                 </div>
                 <div class="card card-outline card-success table-responsive px-2">
                     <table class="table-sm table-hover text-mowrap">
@@ -277,7 +273,6 @@ $noBeli = generateNo()
                                         JOIN tbl_barang b ON s.id_barang=b.id_barang 
                                         WHERE s.id_satuan='{$item['id_satuan']}'");
                                     $row = mysqli_fetch_assoc($q);
-
                                     $total += $item['subtotal'];
                                     ?>
                                     <tr>
@@ -305,74 +300,78 @@ $noBeli = generateNo()
     </section>
 </div>
 <script>
-    let namaBrg = document.getElementById('namaBrg');
-    let kodeBrg = document.querySelector('input[name="kodeBrg"]');
-    let harga = document.getElementById('harga');
-    let qty = document.getElementById('qty');
-    let jmlHarga = document.getElementById('jmlHarga');
-    let satuan = document.getElementById('satuan'); // dropdown satuan
+    $(document).ready(function () {
+        // Aktifkan Select2 untuk barang dan supplier
+        $('#namaBrg').select2({
+            placeholder: "-- Pilih atau cari barang --",
+            allowClear: true,
+            width: '100%'
+        });
 
-    // Fungsi hitung jumlah harga
+        $('#supplier').select2({
+            placeholder: "-- Pilih atau cari supplier --",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+
+    const namaBrg = document.getElementById('namaBrg');
+    const harga = document.getElementById('harga');
+    const qty = document.getElementById('qty');
+    const jmlHarga = document.getElementById('jmlHarga');
+    const satuan = document.getElementById('satuan');
+
+    // Fungsi hitung otomatis jumlah harga
     function hitungTotal() {
-        let q = parseFloat(qty.value) || 0;
-        let h = parseFloat(harga.value) || 0;
+        const q = parseFloat(qty.value) || 0;
+        const h = parseFloat(harga.value) || 0;
         jmlHarga.value = q * h;
     }
 
-    namaBrg.addEventListener('change', function () {
-        let val = this.value.trim();
-        let selectedOption = Array.from(document.querySelectorAll('#listBarang option'))
-            .find(option => option.value.trim().toLowerCase() === val.toLowerCase());
+    $('#namaBrg').on('change', function () {
+        const idBarang = $(this).val();
 
-        if (selectedOption) {
-            let idBarang = selectedOption.getAttribute('data-id');
-            kodeBrg.value = idBarang;
-            console.log("ID barang:", idBarang);
-
-            fetch('get_satuan.php?id_barang=' + idBarang)
-                .then(res => res.json())
-                .then(data => {
-                    console.log("Response dari get_satuan.php:", data);
-                    satuan.innerHTML = '<option value="">-- Pilih Satuan --</option>';
-
-                    if (Array.isArray(data)) {
-                        data.forEach((item, index) => {
-                            let opt = document.createElement('option');
-                            opt.value = item.id_satuan;
-                            opt.text = item.satuan + (item.nama_varian ? " - " + item.nama_varian : "");
-                            opt.setAttribute('data-harga', item.harga_beli);
-                            opt.setAttribute('data-stok', 0);
-                            satuan.appendChild(opt);
-
-                            // Pilih item pertama otomatis
-                            if (index === 0) {
-                                satuan.value = item.id_satuan;      // set dropdown
-                                harga.value = item.harga_beli;      // update harga
-                                hitungTotal();                      // hitung total
-                                qty.focus();                         // arahkan ke quantity
-                            }
-                        });
-                    }
-                })
-                .catch(err => console.error("Fetch error:", err));
-        } else {
-            kodeBrg.value = "";
-            satuan.innerHTML = '<option value="">-- Pilih Satuan --</option>';
+        if (!idBarang) {
+            $('#satuan').html('<option value="">-- Pilih Satuan --</option>');
+            $('#harga').val('');
+            $('#jmlHarga').val('');
+            return;
         }
+
+        fetch('get_satuan.php?id_barang=' + idBarang)
+            .then(res => res.json())
+            .then(data => {
+                let satuanSelect = document.getElementById('satuan');
+                satuanSelect.innerHTML = '<option value="">-- Pilih Satuan --</option>';
+                data.forEach((item, index) => {
+                    let opt = document.createElement('option');
+                    opt.value = item.id_satuan;
+                    opt.text = item.satuan + (item.nama_varian ? " - " + item.nama_varian : "");
+                    opt.setAttribute('data-harga', item.harga_jual);
+                    satuanSelect.appendChild(opt);
+
+                    if (index === 0) {
+                        satuanSelect.value = item.id_satuan;
+                        $('#harga').val(item.harga_jual);
+                        hitungTotal();
+                        $('#qty').focus();
+                    }
+                });
+            })
+            .catch(err => console.error("Fetch error:", err));
     });
 
 
+    // Saat satuan diubah → update harga otomatis
     satuan.addEventListener('change', function () {
-        let selected = this.options[this.selectedIndex];
+        const selected = this.options[this.selectedIndex];
         harga.value = selected.getAttribute('data-harga') || '';
         hitungTotal();
     });
 
-    // Tambahin event di qty dan harga
     qty.addEventListener('input', hitungTotal);
     harga.addEventListener('input', hitungTotal);
 </script>
-
 <?php
 require "../template/footer.php";
 ?>

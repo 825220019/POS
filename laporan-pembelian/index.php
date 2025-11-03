@@ -113,7 +113,6 @@ $pembelian = getData("
         </div>
     </div>
 </div>
-
 <script>
     let tgl1 = document.getElementById('tgl1');
     let tgl2 = document.getElementById('tgl2');

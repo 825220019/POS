@@ -8,7 +8,7 @@ if (!isset($_SESSION["ssLoginPOS"])) {
 require "../config/config.php";
 require "../config/functions.php";
 
-// ✅ Pastikan parameter nojual dikirim
+//Pastikan parameter nojual dikirim
 if (!isset($_GET['nojual']) || empty($_GET['nojual'])) {
     echo "<script>
         alert('Nomor nota tidak ditemukan!');
@@ -151,5 +151,4 @@ if ($selisih >= 0) {
         setTimeout(() => { window.close(); }, 3000);
     </script>
 </body>
-
 </html>

@@ -85,7 +85,7 @@ if (isset($_POST['simpan'])) {
                                 </div>
                                 <div class="form-group">
                                     <label for="level">Level</label>
-                                    <select name="level" id="level" class="form-control">
+                                    <select name="level" id="level" class="form-control" required>
                                         <option value="">-- Level User--</option>
                                         <option value="admin">Admin</option>
                                         <option value="kasir">Kasir</option>

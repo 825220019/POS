@@ -7,7 +7,6 @@ if (!isset($_SESSION["ssLoginPOS"])) {
     exit();
 }
 
-
 require "../config/config.php";
 require "../config/functions.php";
 
@@ -32,8 +31,7 @@ $pembelian = getData("
     JOIN tbl_barang b ON s.id_barang = b.id_barang
     WHERE d.no_beli = '$id'
 ");
-
-    ?>
+?>
 
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">

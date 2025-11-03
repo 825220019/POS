@@ -68,7 +68,7 @@ $brgNum = count($barang);
           <div class="small-box bg-warning">
             <div class="inner">
               <h3><?= $pelangganNum ?></h3>
-              <p>Customer</p>
+              <p>Pelanggan</p>
             </div>
             <div class="icon">
               <i class="ion ion-person-stalker"></i>
