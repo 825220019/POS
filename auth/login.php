@@ -137,5 +137,4 @@ if (isset($_POST['login'])) {
   <!-- AdminLTE App -->
   <script src="<?= $main_url ?>asset/AdminLTE-3.2.0/dist/js/adminlte.min.js"></script>
 </body>
-
 </html>

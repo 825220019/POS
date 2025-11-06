@@ -2,7 +2,7 @@
 
 session_start();
 if (!isset($_SESSION["ssLoginPOS"])) {
-    header("location: auth/login.php");
+    header("location: ../auth/login.php");
     exit();
 }
 
@@ -82,8 +82,7 @@ if (isset($_POST['koreksi'])) {
                                     <label for="ketr">Deskripsi</label>
                                     <textarea class="form-control" id="ketr" name="ketr" rows="1"
                                         placeholder="keterangan pelanggan"
-                                        required><?= $pelanggan['deskripsi'] ?>
-                                    </textarea>
+                                        required><?= $pelanggan['deskripsi'] ?></textarea>
                                 </div>
                             </div>
                         </div>

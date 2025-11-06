@@ -2,7 +2,7 @@
 
 session_start();
 if (!isset($_SESSION["ssLoginPOS"])) {
-    header("location: auth/login.php");
+    header("location: ../auth/login.php");
     exit();
 }
 
@@ -83,8 +83,7 @@ if (isset($_POST['simpan'])) {
                                 <div class="form-group">
                                     <label for="ketr">Deskripsi</label>
                                     <textarea class="form-control" id="ketr" name="ketr" rows="1"
-                                        placeholder="keterangan pelanggan" required>
-                                </textarea>
+                                        placeholder="keterangan pelanggan" required></textarea>
                                 </div>
                             </div>
                             <div class="col-lg-4 mb-3"></div>

@@ -1,9 +1,4 @@
 <?php
-if (userLogin()['level'] == 'kasir') {
-    header("location:" . $main_url . "error-page.php");
-    exit();
-}
-
 function insert($data){
     global $koneksi;
 
