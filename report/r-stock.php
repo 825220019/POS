@@ -3,25 +3,39 @@ require "../config/config.php";
 require "../config/functions.php";
 require('../asset/fpdf/vendor/autoload.php');
 
+/*
+    LOGIKA SAMA DENGAN index.php:
+    - Ambil stok dasar (b.stok)
+    - Ambil semua jumlah_isi untuk setiap id_barang
+    - Faktor konversi = PERKALIAN semua jumlah_isi
+      (di SQL menggunakan exp(SUM(log(jumlah_isi))))
+    - stok_konversi = stok_dasar / faktor
+*/
+
 $stockBrg = getData("
-    SELECT 
+    SELECT
         b.id_barang,
         b.nama_barang,
-        b.stok / COALESCE(s.jumlah_isi, 1) AS stok_konversi,
-        COALESCE(s.satuan, b.satuan_tertinggi) AS satuan_tertinggi
+        b.stok,
+        b.satuan_tertinggi,
+        COALESCE(EXP(SUM(LOG(s.jumlah_isi))), 1) AS faktor_konversi
     FROM tbl_barang b
-    LEFT JOIN (
-        SELECT s1.id_barang, s1.satuan, s1.jumlah_isi
-        FROM tbl_satuan s1
-        INNER JOIN (
-            SELECT id_barang, MAX(jumlah_isi) AS max_jumlah
-            FROM tbl_satuan
-            GROUP BY id_barang
-        ) s2 ON s1.id_barang = s2.id_barang AND s1.jumlah_isi = s2.max_jumlah
-        GROUP BY s1.id_barang  -- pastikan hanya 1 row per id_barang
-    ) s ON s.id_barang = b.id_barang
+    LEFT JOIN tbl_satuan s ON s.id_barang = b.id_barang
+    GROUP BY b.id_barang
     ORDER BY b.id_barang
 ");
+
+// Hitung stok_konversi sama seperti index.php
+foreach ($stockBrg as $key => $row) {
+    $faktor = $row['faktor_konversi'];
+    if ($faktor <= 0) {
+        $faktor = 1;
+    }
+
+    $stokKonversi = $row['stok'] / $faktor;
+    $stockBrg[$key]['stok_konversi'] = floor($stokKonversi);
+}
+
 $pdf = new FPDF();
 $pdf->AddPage();
 $pdf->SetFont('Arial', 'B', 16);
@@ -42,7 +56,7 @@ foreach ($stockBrg as $stock) {
     $pdf->Cell(10, 8, $no++, 1, 0, 'C');
     $pdf->Cell(40, 8, $stock['id_barang'], 1, 0);
     $pdf->Cell(80, 8, $stock['nama_barang'], 1, 0);
-    $pdf->Cell(30, 8, round($stock['stok_konversi'], 2), 1, 0, 'C');
+    $pdf->Cell(30, 8, $stock['stok_konversi'], 1, 0, 'C');
     $pdf->Cell(30, 8, $stock['satuan_tertinggi'], 1, 1, 'C');
 }
 
