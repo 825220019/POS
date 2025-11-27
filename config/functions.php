@@ -151,11 +151,12 @@ function in_date($tgl){
 
 function omzet(){
     global $koneksi;
-    $queryOmzet = mysqli_query($koneksi, "SELECT SUM(total) as omzet FROM tbl_jual_head");
-    $data = mysqli_fetch_assoc($queryOmzet);
-    $omzet = number_format($data['omzet'],0,',','.');
-    
-    return $omzet;
+    $data = mysqli_fetch_assoc(mysqli_query($koneksi, "
+        SELECT SUM(total) AS omzet 
+        FROM tbl_jual_head 
+        WHERE tgl_jual >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    "));
+    return number_format($data['omzet'], 0, ',', '.');
 }
 
 ?>

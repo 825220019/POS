@@ -380,7 +380,7 @@ if (isset($_POST['simpan'])) {
 
             <!-- Kolom Kanan -->
             <div class="col-lg-6">
-              <div class="card card-outline card-warning p-3" style="max-height: 310px; overflow-y: auto;">
+              <div class="card card-outline card-warning p-3" style="max-height: 320px; overflow-y: auto;">
                 <div class="row">
                   <label for="varian">Varian</label>
                   <?php
@@ -451,4 +451,23 @@ if (isset($_POST['simpan'])) {
     </div>
   </section>
 </div>
+
+<script>
+  $(document).ready(function () {
+    $('#supplier').select2({
+        placeholder: "-- Pilih atau cari supplier --",
+        allowClear: true,
+        width: '100%',
+        dropdownCssClass: 'text-lg',
+    });
+
+    $('.select2-selection--single').css({
+        'height': '48px', // tinggi kolom
+        'line-height': '46px'
+    });
+
+    // Biar panah dropdown sejajar
+    $('.select2-selection__arrow').css('height', '46px');
+});
+</script>
 <?php require "../template/footer.php"; ?> 

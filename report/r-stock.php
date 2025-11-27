@@ -12,12 +12,17 @@ require('../asset/fpdf/vendor/autoload.php');
     - stok_konversi = stok_dasar / faktor
 */
 
+// Ambil parameter filter
+$stokFilter = isset($_GET['stok']) ? $_GET['stok'] : '';
+
+// Ambil data barang + faktor konversi
 $stockBrg = getData("
     SELECT
         b.id_barang,
         b.nama_barang,
         b.stok,
         b.satuan_tertinggi,
+        b.stock_minimal,
         COALESCE(EXP(SUM(LOG(s.jumlah_isi))), 1) AS faktor_konversi
     FROM tbl_barang b
     LEFT JOIN tbl_satuan s ON s.id_barang = b.id_barang
@@ -25,23 +30,38 @@ $stockBrg = getData("
     ORDER BY b.id_barang
 ");
 
-// Hitung stok_konversi sama seperti index.php
+// Hitung stok_konversi
 foreach ($stockBrg as $key => $row) {
     $faktor = $row['faktor_konversi'];
-    if ($faktor <= 0) {
-        $faktor = 1;
-    }
-
+    if ($faktor <= 0) $faktor = 1;
     $stokKonversi = $row['stok'] / $faktor;
     $stockBrg[$key]['stok_konversi'] = floor($stokKonversi);
+
+    // Tentukan status stok
+    if ($stokKonversi <= 0) {
+        $stockBrg[$key]['status'] = 'Kosong';
+    } elseif ($stokKonversi > $row['stock_minimal']) {
+        $stockBrg[$key]['status'] = 'Aman';
+    } else {
+        $stockBrg[$key]['status'] = 'Kurang';
+    }
 }
+
+// Filter berdasarkan pilihan user
+if ($stokFilter === 'kosong') {
+    $stockBrg = array_filter($stockBrg, fn($s) => $s['status'] === 'Kosong');
+} elseif ($stokFilter === 'aman') {
+    $stockBrg = array_filter($stockBrg, fn($s) => $s['status'] === 'Aman');
+}
+
+// … lalu generate PDF sama seperti sebelumnya
 
 $pdf = new FPDF();
 $pdf->AddPage();
 $pdf->SetFont('Arial', 'B', 16);
 $pdf->Cell(190, 10, 'Laporan Stok Barang', 0, 1, 'C');
 
-$pdf->Ln(10);
+$pdf->Ln(10); 
 
 $pdf->SetFont('Arial', 'B', 12);
 $pdf->Cell(10, 10, 'No', 1, 0, 'C');

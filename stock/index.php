@@ -56,8 +56,8 @@ foreach ($konversi as $k) {
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title"><i class="fas fa-list fa-sm"></i> Stock</h3>
-                    <a href="<?= $main_url ?>report/r-stock.php" class="btn btn-sm btn-outline-primary float-right"
-                        target="_blank">
+                    <a href="#" class="btn btn-sm btn-outline-primary float-right" data-toggle="modal"
+                        data-target="#mdlFilterStock">
                         <i class="fas fa-print"></i> Cetak
                     </a>
                 </div>
@@ -85,14 +85,19 @@ foreach ($konversi as $k) {
                                 $faktor = 1;
                                 if (isset($konversiMap[$id])) {
                                     foreach ($konversiMap[$id] as $satuan => $jumlah_isi) {
-                                        $faktor *= $jumlah_isi;
+                                        if ($jumlah_isi > 0) {   // hanya kalikan jika >0
+                                            $faktor *= $jumlah_isi;
+                                        }
                                     }
                                 }
 
-                                $stokTertinggi = $stokDasar / $faktor;
-                                $status = ($stokTertinggi < $stock['stock_minimal'])
+                                // hindari pembagian dengan nol
+                                $stokTertinggi = ($faktor > 0) ? $stokDasar / $faktor : 0;
+
+                                $status = ($stokTertinggi <= $stock['stock_minimal'])
                                     ? '<span class="text-danger">Stok Kurang</span>'
                                     : '<span class="text-success">Stok Aman</span>';
+
                                 ?>
                                 <tr>
                                     <td><?= $no++ ?></td>
@@ -110,5 +115,40 @@ foreach ($konversi as $k) {
             </div>
         </div>
     </section>
+    <div class="modal fade" id="mdlFilterStock">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Filter Laporan Stok</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Pilih Filter:</label>
+                        <select id="filterStok" class="form-control">
+                            <option value="">-- Semua Barang --</option>
+                            <option value="kosong">Stok Kosong</option>
+                            <option value="aman">Stok Aman</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="printStock()">
+                        <i class="fas fa-print"></i> Cetak
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+<script>
+    function printStock() {
+    let filter = document.getElementById('filterStok').value;
+    let url = "<?= $main_url ?>report/r-stock.php";
+    if (filter) {
+        url += "?stok=" + filter;
+    }
+    window.open(url, "_blank");
+}
+</script>
 <?php require "../template/footer.php"; ?>

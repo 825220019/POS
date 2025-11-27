@@ -6,6 +6,12 @@ require('../asset/fpdf/vendor/autoload.php');
 // Ambil parameter tanggal dengan validasi
 $tgl1 = isset($_GET['tgl1']) ? $_GET['tgl1'] : date('Y-m-d');
 $tgl2 = isset($_GET['tgl2']) ? $_GET['tgl2'] : date('Y-m-d');
+$pelanggan = isset($_GET['pelanggan']) ? $_GET['pelanggan'] : '';
+
+$where = "h.tgl_jual BETWEEN '$tgl1' AND '$tgl2'";
+if (!empty($pelanggan)) {
+    $where .= " AND h.id_pelanggan = '$pelanggan'";
+}
 
 // Ambil data penjualan sesuai periode
 $dataJual = getData("
@@ -16,7 +22,7 @@ $dataJual = getData("
         h.total
     FROM tbl_jual_head h
     LEFT JOIN tbl_pelanggan p ON h.id_pelanggan = p.id_pelanggan
-    WHERE h.tgl_jual BETWEEN '$tgl1' AND '$tgl2'
+    WHERE $where
     ORDER BY h.tgl_jual ASC
 ");
 

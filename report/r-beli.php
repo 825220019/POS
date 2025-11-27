@@ -6,6 +6,14 @@ require('../asset/fpdf/vendor/autoload.php');
 // Validasi tanggal
 $tgl1 = isset($_GET['tgl1']) ? $_GET['tgl1'] : date('Y-m-d');
 $tgl2 = isset($_GET['tgl2']) ? $_GET['tgl2'] : date('Y-m-d');
+$supplier = isset($_GET['supplier']) ? $_GET['supplier'] : '';
+
+$where = "h.tgl_beli BETWEEN '$tgl1' AND '$tgl2'";
+
+if (!empty($supplier)) {
+    // Tambahkan filter supplier jika ada
+    $where .= " AND h.id_supplier = '$supplier'";
+}
 
 // Query data pembelian sesuai periode
 $dataBeli = getData("
@@ -16,7 +24,7 @@ $dataBeli = getData("
         h.total
     FROM tbl_beli_head h
     JOIN tbl_supplier s ON h.id_supplier = s.id_supplier
-    WHERE h.tgl_beli BETWEEN '$tgl1' AND '$tgl2'
+    WHERE $where
     ORDER BY h.tgl_beli ASC
 ");
 

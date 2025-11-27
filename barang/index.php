@@ -97,8 +97,8 @@ if ($msg == 'updated') {
               <tr>
                 <th>ID Barang</th>
                 <th>Nama Barang</th>
-                <th>Harga Beli</th>
-                <th>Harga Jual</th>
+                <th style="text-align: center;">Harga Beli</th>
+                <th style="text-align: center;">Harga Jual</th>
                 <th width="10%">Operasi</th>
               </tr>
             </thead>
@@ -117,8 +117,8 @@ if ($msg == 'updated') {
                 <tr>
                   <td><?= $brg['id_barang']; ?></td>
                   <td><?= $brg['nama_barang']; ?></td>
-                  <td><?= number_format($brg['harga_beli'], 0, ',', '.'); ?></td>
-                  <td><?= number_format($brg['harga_jual'], 0, ',', '.'); ?></td>
+                  <td style="text-align: right; padding-right: 180px;"><?= number_format($brg['harga_beli'], 0, ',', '.'); ?></td>
+                  <td style="text-align: right; padding-right: 140px;"><?= number_format($brg['harga_jual'], 0, ',', '.'); ?></td>
                   <td>
                     <a href="form-barang.php?id=<?= $brg['id_barang'] ?>&msg=editing" class="btn btn-warning btn-sm"
                       title="edit barang">
@@ -140,6 +140,7 @@ if ($msg == 'updated') {
 </div>
 
 <script>
+  
   document.querySelector("form").addEventListener("submit", function (e) {
     const satuanInputs = document.querySelectorAll('input[name="satuan[]"]');
     if (satuanInputs.length > 0) {

@@ -97,6 +97,20 @@ $penjualan = getData("
                 </div>
                 <div class="modal-body">
                     <div class="form-group row">
+                        <label for="supplier" class="col-sm-3 col-form-label">Supplier</label>
+                        <div class="col-sm-9">
+                            <select class="form-control" id="pelanggan" name="pelanggan">
+                                <option value="">-- Semua Pelanggan --</option>
+                                <?php
+                                $pelanggans = getData("SELECT id_pelanggan, nama FROM tbl_pelanggan ORDER BY nama ASC");
+                                foreach ($pelanggans as $p) {
+                                    echo '<option value="' . $p['id_pelanggan'] . '">' . $p['nama'] . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
                         <label for="tgl1" class="col-sm-3 col-form-label">Tanggal Awal</label>
                         <div class="col-sm-9">
                             <input type="date" class="form-control" id="tgl1" name="tgl1" value="<?= date('Y-m-d'); ?>">
@@ -119,12 +133,28 @@ $penjualan = getData("
 </div>
 
 <script>
+    $(document).ready(function () {
+        $('#pelanggan').select2({
+            placeholder: "-- Pilih atau cari pelanggan --",
+            allowClear: true,
+            width: '100%',
+            dropdownCssClass: 'text-lg',
+        });
+        $('.select2-selection--single').css({
+            'height': '48px',       // tinggi kolom
+        });
+
+        // Biar panah dropdown sejajar
+        $('.select2-selection__arrow').css('height', '46px');
+    });
+
     let tgl1 = document.getElementById('tgl1');
     let tgl2 = document.getElementById('tgl2');
 
     function printDoc() {
         if (tgl1.value !== "" && tgl2.value !== "") {
-            window.open("../report/r-jual.php?tgl1=" + tgl1.value + "&tgl2=" + tgl2.value, "_blank");
+            let pelanggan = document.getElementById('pelanggan').value;
+            window.open("../report/r-jual.php?tgl1=" + tgl1.value + "&tgl2=" + tgl2.value + "&pelanggan=" + pelanggan, "_blank");
         } else {
             alert('Tanggal Awal dan Tanggal Akhir harus diisi!');
         }

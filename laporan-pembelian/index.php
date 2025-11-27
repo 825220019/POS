@@ -93,6 +93,20 @@ $pembelian = getData("
                 </div>
                 <div class="modal-body">
                     <div class="form-group row">
+                        <label for="supplier" class="col-sm-3 col-form-label">Supplier</label>
+                        <div class="col-sm-9">
+                            <select class="form-control" id="supplier" name="supplier">
+                                <option value="">-- Semua Supplier --</option>
+                                <?php
+                                $suppliers = getData("SELECT id_supplier, nama FROM tbl_supplier ORDER BY nama ASC");
+                                foreach ($suppliers as $s) {
+                                    echo '<option value="' . $s['id_supplier'] . '">' . $s['nama'] . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group row">
                         <label for="tgl1" class="col-sm-3 col-form-label">Tanggal Awal</label>
                         <div class="col-sm-9">
                             <input type="date" class="form-control" id="tgl1" name="tgl1" value="<?= date('Y-m-d'); ?>">
@@ -114,12 +128,28 @@ $pembelian = getData("
     </div>
 </div>
 <script>
+        $(document).ready(function () {
+        $('#supplier').select2({
+            placeholder: "-- Pilih atau cari supplier --",
+            allowClear: true,
+            width: '100%',
+            dropdownCssClass: 'text-lg',
+        });
+        $('.select2-selection--single').css({
+            'height': '48px',       // tinggi kolom
+        });
+
+        // Biar panah dropdown sejajar
+        $('.select2-selection__arrow').css('height', '46px');
+    });
+
     let tgl1 = document.getElementById('tgl1');
     let tgl2 = document.getElementById('tgl2');
 
     function printDoc() {
     if (tgl1.value !== "" && tgl2.value !== "") {
-        window.open("../report/r-beli.php?tgl1=" + tgl1.value + "&tgl2=" + tgl2.value, "_blank");
+        let supplier = document.getElementById('supplier').value;
+        window.open("../report/r-beli.php?tgl1=" + tgl1.value + "&tgl2=" + tgl2.value + "&supplier=" + supplier, "_blank");
     } else {
         alert('Tanggal Awal dan Tanggal Akhir harus diisi!');
     }

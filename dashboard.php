@@ -112,13 +112,28 @@ $brgNum = count($barang);
                 <?php
                 $no = 1;
                 $stockMin = getData("SELECT * FROM tbl_barang WHERE stok < stock_minimal");
-                foreach ($stockMin as $min) { ?>
+                $totalData = count($stockMin);
+                $maxRows = 5;
+
+                foreach ($stockMin as $index => $min) {
+                  if ($index < $maxRows) { ?>
+                    <tr>
+                      <td><?= $no++ ?></td>
+                      <td><?= $min['nama_barang']; ?></td>
+                      <td class="text-center"><?= $min['stok']; ?></td>
+                      <td class="text-center"><?= $min['stock_minimal']; ?></td>
+                      <td class="text-danger">Stok Kurang</td>
+                    </tr>
+                    <?php
+                  }
+                }
+
+                // Jika data lebih dari 5
+                if ($totalData > $maxRows) { ?>
                   <tr>
-                    <td><?= $no++ ?></td>
-                    <td><?= $min['nama_barang']; ?></td>
-                    <td class="text-center"><?= $min['stok']; ?></td>
-                    <td class="text-center"><?= $min['stock_minimal']; ?></td>
-                    <td class="text-danger">Stok Kurang</td>
+                    <td colspan="5" class="text-center">
+                      <h3><a href="stock" title="laporan stok">.....</a></h3>
+                    </td>
                   </tr>
                 <?php } ?>
               </tbody>
@@ -131,7 +146,7 @@ $brgNum = count($barang);
               <h5>Omzet Penjualan</h5>
             </div>
             <div class="card-body text-primary">
-              <h2><span class="h4">Rp </span><?= omzet()?></h2>
+              <h2><span class="h4">Rp </span><?= omzet() ?></h2>
             </div>
           </div>
         </div>

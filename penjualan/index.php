@@ -248,7 +248,7 @@ $total = array_sum(array_column($_SESSION['cart'], 'subtotal')) ?? 0;
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> 
                 <div class="card pt-1 pb-2 px-3">
                     <div class="row">
                         <div class="col-lg-4">
