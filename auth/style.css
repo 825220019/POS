@@ -8,7 +8,7 @@
     animation: slide-down 1.5s;
 }
 
-@keyframes .slide-down {
+@keyframes slide-down {
     from {
         transform: translateY(-40px);
         opacity: 0;
