@@ -109,7 +109,11 @@ if ($msg == 'updated') {
                                       b.id_barang,
                                       b.nama_barang,
                                       b.harga_beli,
-                                      b.harga_jual
+                                      (
+                                          SELECT MAX(s.harga_jual)
+                                          FROM tbl_satuan s
+                                          WHERE s.id_barang = b.id_barang
+                                      ) AS harga_jual
                                   FROM tbl_barang b
                                   ORDER BY b.id_barang
                               ");
