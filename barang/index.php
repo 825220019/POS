@@ -24,7 +24,7 @@ if (isset($_GET['msg'])) {
 $alert = '';
 //jalankan fungsi hapus barang
 if ($msg == 'deleted') {
-  // jangan cast ke int kalau id_barang bertipe string seperti "BRG-001"
+  // jangan cast ke int, id_barang bertipe string seperti "BRG-001"
   $id = isset($_GET['id']) ? $_GET['id'] : '';
   if ($id !== '') {
     delete($id);
@@ -143,8 +143,8 @@ if ($msg == 'updated') {
   </section>
 </div>
 
+//menyimpan satuan dasar sebelum submit form
 <script>
-  
   document.querySelector("form").addEventListener("submit", function (e) {
     const satuanInputs = document.querySelectorAll('input[name="satuan[]"]');
     if (satuanInputs.length > 0) {

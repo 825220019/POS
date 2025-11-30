@@ -14,6 +14,7 @@ require "../template/header.php";
 require "../template/navbar.php";
 require "../template/sidebar.php";
 
+//ambil data supplier jika ada
 $kode = @$_GET["pilihsupplier"] ? $_GET["pilihsupplier"] : '';
 if ($kode) {
   $selectSupplier = getData("SELECT * FROM tbl_supplier 
@@ -104,7 +105,7 @@ if (isset($_POST['simpan'])) {
     const formatter = new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0  
     });
 
     function updatePlaceholders() {
@@ -142,7 +143,7 @@ if (isset($_POST['simpan'])) {
         }
       }
 
-      // Baris ke-4 dst tetap placeholder 0
+      // Baris ke-4 dst (tidak pakai)
       for (let i = 3; i < jualInputs.length; i++) {
         jualInputs[i].placeholder = "Rp 0";
       }
@@ -162,7 +163,7 @@ if (isset($_POST['simpan'])) {
     // Jalankan saat load
     updatePlaceholders();
 
-    // Event listener
+    // Event listener langsung update saat input berubah
     if (beliInput) beliInput.addEventListener('input', updatePlaceholders);
     if (hargaJualUtama) hargaJualUtama.addEventListener('input', updatePlaceholders);
     jumlahInputs.forEach(inp => inp.addEventListener('input', updatePlaceholders));
@@ -171,6 +172,8 @@ if (isset($_POST['simpan'])) {
   document.addEventListener("DOMContentLoaded", function () {
     const hargaBeliInput = document.querySelector("input[name='harga_beli']");
 
+
+    //validasi harga jual
     function validasiHargaJual(input) {
   const hargaBeli = parseFloat(hargaBeliInput.value.replace(/\D/g, "")) || 0;
   const hargaJual = parseFloat(input.value.replace(/\D/g, "")) || 0;
@@ -191,7 +194,7 @@ if (isset($_POST['simpan'])) {
       return false;
     }
   } else {
-    // 🔹 Baris kedua dan seterusnya → bandingkan dengan placeholder hasil hitungan
+    //  Baris kedua dan seterusnya → bandingkan dengan placeholder hasil hitungan
     if (hargaJual > 0 && hargaJual < placeholderValue) {
       alert("Harga jual tidak boleh lebih kecil dari harga acuan!");
       input.value = "";

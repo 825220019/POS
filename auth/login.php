@@ -1,5 +1,6 @@
 <?php
 
+//cek sesi user
 session_start();
 
 if (isset($_SESSION["ssLoginPOS"])) {
@@ -9,23 +10,26 @@ if (isset($_SESSION["ssLoginPOS"])) {
 
 require "../config/config.php";
 
+//submit form
 if (isset($_POST['login'])) {
   $username = mysqli_real_escape_string($koneksi, $_POST['username']);
   $password = mysqli_real_escape_string($koneksi, $_POST['password']);
 
+  //validasi username
   $queryLogin = mysqli_query($koneksi, "SELECT * FROM tbl_user WHERE username = '$username'");
 
   if (mysqli_num_rows($queryLogin) === 1) {
     $row = mysqli_fetch_assoc($queryLogin);
+
+    //validasi password
     if (password_verify($password, $row['password'])) {
       // Set session lengkap
       $_SESSION["ssLoginPOS"] = [
         'user_id' => $row['user_id'],
         'username' => $row['username'],
-        'nama_user' => $row['fullname'] ?? '', // jika kolom ini ada
+        'nama_user' => $row['fullname'] ?? '',
         'level' => $row['level'] ?? ''
       ];
-
       header("location: ../dashboard.php");
       exit();
     } else {
@@ -68,7 +72,7 @@ if (isset($_POST['login'])) {
     const passwordInput = document.querySelector("input[name='password']");
     const signInBtn = document.querySelector("button[type='submit']");
 
-    // Enter di username -> pindah ke password
+    //enter, pindah kolom
     usernameInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -76,7 +80,7 @@ if (isset($_POST['login'])) {
       }
     });
 
-    // Enter di password -> klik tombol Sign In
+    //enter, pindah kolom
     passwordInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();

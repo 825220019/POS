@@ -16,6 +16,7 @@ require "template/header.php";
 require "template/navbar.php";
 require "template/sidebar.php";
 
+//ambil data jumlah (array)
 $suppliers = getData("SELECT * FROM tbl_supplier");
 $supplierNum = count($suppliers);
 

@@ -15,7 +15,7 @@ require "../template/header.php";
 require "../template/navbar.php";
 require "../template/sidebar.php";
 
-
+//hapus item di cart
 if (isset($_GET['msg'])) {
     $msg = $_GET['msg'];
 } else {
@@ -32,7 +32,7 @@ if (isset($_GET['hapus'])) {
     echo "<script>document.location='?tgl=$tgl&supplier=$supplier'</script>";
 }
 
-
+//ambil data barang dan satuan
 if (isset($_GET['id_barang'])) {
     $id_barang = $_GET['id_barang'];
     $kode = isset($_GET['pilihbrg']) ? $_GET['pilihbrg'] : '';
@@ -46,18 +46,18 @@ if (isset($_GET['id_barang'])) {
 ");
     }
 }
-
+//inisialisasi cart
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
-
+//hitung total pembelian
 $total = 0;
 if (!empty($_SESSION['cart'])) {
     foreach ($_SESSION['cart'] as $item) {
         $total += $item['subtotal'];
     }
 }
-
+// tambah barang ke cart
 if (isset($_POST['addbrg'])) {
     $idSatuan = $_POST['satuan'];
     $qty = (int) $_POST['qty'];
@@ -78,7 +78,7 @@ if (isset($_POST['addbrg'])) {
     echo "<script>document.location='?tgl=$tgl&supplier=$supplier'</script>";
 
 }
-
+//simpan pembelian ke database
 if (isset($_POST['simpan'])) {
     $nobeli = $_POST['nobeli'];
     $tgl = $_POST['tglNota'];
@@ -327,7 +327,7 @@ $noBeli = generateNo()
         const h = parseFloat(harga.value) || 0;
         jmlHarga.value = q * h;
     }
-
+    // Saat barang diubah, load satuan & harga otomatis
     $('#namaBrg').on('change', function () {
         const idBarang = $(this).val();
 

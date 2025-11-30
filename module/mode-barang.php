@@ -189,9 +189,8 @@ function delete($id)
     return mysqli_affected_rows($koneksi);
 }
 
-/**
- * Sinkronisasi satuan dasar ↔ turunan
- */
+
+// Sinkronisasi satuan dasar ke turunan (tidak terpakai)
 function syncKonversiSatuan($id_barang)
 {
     global $koneksi;
